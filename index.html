@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planilla Financiera 100% Automática</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS for XLSX/CSV -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 900: '#14532d' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.03); }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+        .modal-backdrop { background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
+        .pulse-live { animation: pulse-border 2s infinite; }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+    </style>
+</head>
+<body class="h-full font-sans text-slate-800 dark:bg-slate-900 dark:text-slate-100 antialiased flex flex-col md:flex-row overflow-x-hidden">
+
+    <aside class="w-full md:w-64 bg-slate-900 text-slate-300 flex-shrink-0 flex flex-col justify-between border-r border-slate-800 z-20">
+        <div>
+            <!-- Brand Logo -->
+            <div class="p-5 flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-emerald-500/20 pulse-live">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white text-base leading-tight">FinanzasAuto</h1>
+                        <span class="text-[10px] text-emerald-400 font-semibold tracking-wider uppercase">100% Automática</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="p-4 space-y-1">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors bg-emerald-600 text-white shadow-lg shadow-emerald-600/30">
+                    <i class="fa-solid fa-chart-pie w-5"></i>
+                    <span>Resumen General</span>
+                </button>
+                <button onclick="switchTab('transactions')" id="nav-transactions" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-list-check w-5"></i>
+                    <span>Transacciones</span>
+                </button>
+                <button onclick="switchTab('budgets')" id="nav-budgets" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-calculator w-5"></i>
+                    <span>Presupuestos</span>
+                </button>
+                <button onclick="switchTab('recurring')" id="nav-recurring" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-arrows-rotate w-5"></i>
+                    <span>Suscripciones Auto</span>
+                </button>
+                <button onclick="switchTab('apple-shortcuts')" id="nav-apple-shortcuts" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 text-slate-400 hover:text-slate-200">
+                    <i class="fa-brands fa-apple w-5 text-emerald-400"></i>
+                    <span>Atajos Apple Wallet</span>
+                </button>
+                <button onclick="switchTab('ai-advisor')" id="nav-ai-advisor" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 text-emerald-400 hover:text-emerald-300 border border-emerald-500/20 bg-emerald-950/20">
+                    <i class="fa-solid fa-wand-magic-sparkles w-5 text-emerald-400"></i>
+                    <span>Asistente IA Gemini</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Sidebar Footer & Sync Actions -->
+        <div class="p-4 border-t border-slate-800 space-y-2">
+            <button onclick="openImportModal()" class="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-lg shadow-emerald-600/20">
+                <i class="fa-solid fa-file-excel"></i>
+                <span>Auto-Cargar Excel (.xlsx)</span>
+            </button>
+            <button onclick="exportToCSV()" class="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition">
+                <i class="fa-solid fa-file-export text-emerald-400"></i>
+                <span>Exportar a Excel / CSV</span>
+            </button>
+            <div class="flex items-center justify-between px-2 py-1 text-xs text-slate-500">
+                <span>Moneda:</span>
+                <select id="currencySelect" onchange="changeCurrency(this.value)" class="bg-slate-800 text-slate-300 rounded border border-slate-700 px-2 py-1 text-xs focus:outline-none">
+                    <option value="CLP">CLP ($)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="MXN">MXN ($)</option>
+                    <option value="ARS">ARS ($)</option>
+                </select>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sticky top-0 z-10 shadow-sm">
+            <div>
+                <h2 id="viewTitle" class="text-2xl font-bold text-slate-900 dark:text-white">Panel de Control Automático</h2>
+                <p id="viewSubtitle" class="text-xs text-slate-500 dark:text-slate-400">Sincronización en segundo plano e inteligencia financiera.</p>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <div id="cloudSyncStatus" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 text-xs font-semibold border border-emerald-200 dark:border-emerald-800">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Modo Automático Activo</span>
+                </div>
+
+                <div class="relative">
+                    <select id="monthFilter" onchange="applyFilters()" class="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-medium text-xs rounded-xl px-3 py-2.5 border-0 focus:ring-2 focus:ring-emerald-500">
+                        <option value="ALL">Todo el Histórico</option>
+                    </select>
+                </div>
+
+                <button onclick="openTransactionModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-semibold text-xs flex items-center space-x-2 shadow-lg shadow-emerald-600/20 transition transform active:scale-95">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Nuevo Movimiento</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Budget Alert Banner -->
+        <div id="budgetAlertBanner" class="hidden mx-6 mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-triangle-exclamation text-base text-amber-500"></i>
+                <span id="budgetAlertText">Atención: Ciertas categorías han superado el 80% de su presupuesto.</span>
+            </div>
+            <button onclick="switchTab('budgets')" class="underline font-bold hover:text-amber-800">Ver Presupuestos</button>
+        </div>
+
+        <div class="p-6 space-y-6 flex-1">
+
+            <section id="tab-dashboard" class="tab-content space-y-6">
+                <!-- KPI Metric Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ingresos Totales</span>
+                            <div id="cardTotalIncome" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">$0</div>
+                            <span class="text-[11px] text-emerald-600 font-medium flex items-center mt-1">
+                                <i class="fa-solid fa-arrow-up mr-1"></i> Entradas reales
+                            </span>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Gastos Totales</span>
+                            <div id="cardTotalExpense" class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">$0</div>
+                            <span class="text-[11px] text-rose-500 font-medium flex items-center mt-1">
+                                <i class="fa-solid fa-arrow-down mr-1"></i> Salidas automáticas
+                            </span>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-credit-card"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Balance Neto</span>
+                            <div id="cardNetBalance" class="text-2xl font-bold text-slate-900 dark:text-white mt-1">$0</div>
+                            <span id="cardSavingsRate" class="text-[11px] text-indigo-500 font-medium flex items-center mt-1">
+                                Tasa de ahorro: 0%
+                            </span>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Uso del Presupuesto</span>
+                            <div id="cardBudgetUsage" class="text-2xl font-bold text-amber-500 mt-1">0%</div>
+                            <div class="w-28 bg-slate-200 dark:bg-slate-700 h-2 rounded-full mt-2 overflow-hidden">
+                                <div id="cardBudgetBar" class="bg-amber-500 h-full rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 dark:text-white text-base">Evolución Mensual (Ingresos vs Gastos)</h3>
+                            <span class="text-xs text-slate-400">Generado automáticamente</span>
+                        </div>
+                        <div class="relative h-64 w-full flex items-center justify-center">
+                            <canvas id="monthlyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 dark:text-white text-base">Gastos por Categoría</h3>
+                            <span class="text-xs text-slate-400">Categorización IA</span>
+                        </div>
+                        <div class="relative h-64 w-full flex items-center justify-center">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 dark:text-white text-base">Últimos Movimientos</h3>
+                            <button onclick="switchTab('transactions')" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                Ver Todos
+                            </button>
+                        </div>
+                        <div id="recentTransactionsList" class="divide-y divide-slate-100 dark:divide-slate-700">
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 dark:text-white text-base">Control de Presupuestos</h3>
+                            <button onclick="switchTab('budgets')" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                Ajustar Topes
+                            </button>
+                        </div>
+                        <div id="quickBudgetList" class="space-y-4">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-transactions" class="tab-content hidden space-y-6">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+                    <div class="flex flex-wrap gap-2 w-full md:w-auto items-center">
+                        <div class="relative flex-1 md:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Buscar descripción, tienda..." class="w-full bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 pl-8 pr-3 py-2 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 border-0">
+                        </div>
+                        <select id="typeFilter" onchange="applyFilters()" class="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs rounded-xl px-3 py-2 border-0 focus:ring-2 focus:ring-emerald-500">
+                            <option value="ALL">Todos los Tipos</option>
+                            <option value="GASTO">Sólo Gastos</option>
+                            <option value="INGRESO">Sólo Ingresos</option>
+                        </select>
+                        <select id="categoryFilter" onchange="applyFilters()" class="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs rounded-xl px-3 py-2 border-0 focus:ring-2 focus:ring-emerald-500">
+                            <option value="ALL">Todas las Categorías</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center space-x-3 text-xs font-medium text-slate-500">
+                        <span id="transactionCountText">0 movimientos</span>
+                        <button onclick="clearAllTransactions()" title="Borrar datos actuales para empezar de cero" class="text-rose-500 hover:text-rose-700 font-semibold text-xs border border-rose-200 dark:border-rose-900/50 px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/30 transition flex items-center space-x-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <span>Vaciar Datos</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 uppercase font-semibold border-b border-slate-200 dark:border-slate-700">
+                                <tr>
+                                    <th class="px-5 py-3">Fecha</th>
+                                    <th class="px-5 py-3">Descripción</th>
+                                    <th class="px-5 py-3">Categoría Auto</th>
+                                    <th class="px-5 py-3">Método</th>
+                                    <th class="px-5 py-3 text-right">Monto</th>
+                                    <th class="px-5 py-3 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullTransactionsTable" class="divide-y divide-slate-100 dark:divide-slate-700 text-slate-700 dark:text-slate-300">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-budgets" class="tab-content hidden space-y-6">
+                <div class="bg-emerald-50 dark:bg-emerald-950/40 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg">
+                            <i class="fa-solid fa-bullseye"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-900 dark:text-white text-sm">Control Automático de Presupuestos</h3>
+                            <p class="text-xs text-slate-600 dark:text-slate-400">Los gastos de Apple Pay y Excel se asignan automáticamente a su tope.</p>
+                        </div>
+                    </div>
+                    <button onclick="openAddBudgetModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow transition">
+                        <i class="fa-solid fa-plus mr-1"></i> Añadir Tope
+                    </button>
+                </div>
+
+                <div id="fullBudgetsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                </div>
+            </section>
+
+            <section id="tab-recurring" class="tab-content hidden space-y-6">
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                        <div>
+                            <h3 class="font-bold text-slate-900 dark:text-white text-base">Suscripciones y Gastos Fijos (Auto-Posteo)</h3>
+                            <p class="text-xs text-slate-500">Se registran solos en tu historial el día programado de cada mes.</p>
+                        </div>
+                        <button onclick="openRecurringModal()" class="bg-slate-900 dark:bg-slate-700 text-white text-xs font-semibold px-4 py-2 rounded-xl hover:bg-slate-800 transition">
+                            <i class="fa-solid fa-plus mr-1"></i> Agregar Recurrente
+                        </button>
+                    </div>
+
+                    <div id="recurringList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-apple-shortcuts" class="tab-content hidden space-y-6">
+                <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-black p-6 rounded-2xl border border-slate-700 text-white shadow-xl">
+                    <div class="flex items-center space-x-4 mb-3">
+                        <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl text-white">
+                            <i class="fa-brands fa-apple text-emerald-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold">Automatización 100% Silenciosa con Apple Pay</h3>
+                            <p class="text-xs text-slate-400">Cero clics: cada pago acerca de tu iPhone o Apple Watch se guarda automáticamente en la nube.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm flex items-center space-x-2">
+                            <i class="fa-solid fa-bolt text-emerald-500"></i>
+                            <span>Pasos para Automatizar en tu iPhone</span>
+                        </h4>
+
+                        <ol class="list-decimal list-inside text-xs text-slate-600 dark:text-slate-300 space-y-3 leading-relaxed">
+                            <li>En tu iPhone, abre la app <strong>Atajos (Shortcuts)</strong>.</li>
+                            <li>Toca <strong>Automatización</strong> en el menú inferior y presiona <strong>"+"</strong>.</li>
+                            <li>Selecciona el disparador <strong>"Transacción"</strong> (Apple Pay).</li>
+                            <li>Marca <strong>"Ejecutar de inmediato"</strong> *(desactiva preguntar antes)*.</li>
+                            <li>Añade la acción <strong>"Obtener contenido de URL"</strong>.</li>
+                            <li>Pega la URL personalizada generada a continuación.</li>
+                        </ol>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm flex items-center space-x-2">
+                            <i class="fa-solid fa-link text-indigo-500"></i>
+                            <span>Enlace de Auto-Sincronización</span>
+                        </h4>
+
+                        <div class="space-y-3">
+                            <div class="p-3 bg-slate-100 dark:bg-slate-700/50 rounded-xl font-mono text-[11px] text-slate-700 dark:text-slate-300 break-all select-all border border-slate-200 dark:border-slate-600" id="shortcutUrlDisplay">
+                                Loading URL...
+                            </div>
+
+                            <button onclick="copyShortcutUrl()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition shadow">
+                                <i class="fa-solid fa-copy"></i>
+                                <span>Copiar Enlace para Atajo</span>
+                            </button>
+
+                            <hr class="border-slate-100 dark:border-slate-700 my-2">
+
+                            <div class="space-y-2">
+                                <span class="font-bold text-xs text-slate-800 dark:text-slate-200">Prueba de Pago Automático:</span>
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <input type="number" id="appleTestAmount" value="4500" placeholder="Monto" class="bg-slate-50 dark:bg-slate-700 border rounded-xl p-2">
+                                    <input type="text" id="appleTestDesc" value="Starbucks Coffee" placeholder="Comercio" class="bg-slate-50 dark:bg-slate-700 border rounded-xl p-2">
+                                </div>
+                                <button onclick="simulateApplePayShortcut()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition shadow">
+                                    <i class="fa-brands fa-apple text-emerald-400"></i>
+                                    <span>Simular Pago Instantáneo</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-ai-advisor" class="tab-content hidden space-y-6">
+                <div class="bg-gradient-to-r from-emerald-900 via-slate-900 to-indigo-950 p-6 rounded-2xl border border-emerald-500/30 text-white shadow-xl relative overflow-hidden">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+                        <div class="space-y-2 max-w-xl">
+                            <div class="inline-flex items-center space-x-2 bg-emerald-500/20 border border-emerald-400/30 px-3 py-1 rounded-full text-xs font-semibold text-emerald-300">
+                                <i class="fa-solid fa-brain"></i>
+                                <span>Gemini 3 Flash</span>
+                            </div>
+                            <h3 class="text-xl font-bold">Diagnóstico Financiero Inteligente</h3>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                Analiza automáticamente tus patrones de gasto, tasa de ahorro y oportunidades de optimización.
+                            </p>
+                        </div>
+                        <button onclick="generateAIFinancialAnalysis()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-5 py-3 rounded-xl text-xs flex items-center justify-center space-x-2 shadow-lg shadow-emerald-500/30 transition transform active:scale-95 flex-shrink-0">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Generar Diagnóstico IA</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3 mb-4">
+                                <h4 class="font-bold text-slate-900 dark:text-white text-sm">Informe de Salud Financiera</h4>
+                                <span id="aiAnalysisStatus" class="text-[11px] text-slate-400">Haz clic en "Generar Diagnóstico"</span>
+                            </div>
+                            <div id="aiAnalysisContainer" class="text-xs text-slate-600 dark:text-slate-300 space-y-3 min-h-[140px] flex flex-col justify-center">
+                                <div class="text-center text-slate-400 py-8 space-y-2">
+                                    <i class="fa-solid fa-robot text-3xl text-slate-300 dark:text-slate-600"></i>
+                                    <p>Genera un informe detallado con sugerencias de ahorro personalizadas.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col h-[400px]">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm border-b border-slate-100 dark:border-slate-700 pb-3">Consultor Financiero IA</h4>
+                        <div id="aiChatHistory" class="flex-1 overflow-y-auto my-3 space-y-3 pr-1 text-xs">
+                            <div class="bg-slate-100 dark:bg-slate-700/60 p-3 rounded-2xl rounded-tl-none max-w-[85%] text-slate-700 dark:text-slate-200">
+                                ¡Hola! ¿En qué puedo ayudarte hoy sobre tus finanzas?
+                            </div>
+                        </div>
+                        <form onsubmit="sendAIChatMessage(event)" class="flex items-center space-x-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                            <input type="text" id="aiChatInput" placeholder="Ej: ¿En qué gasto más?" required class="flex-1 bg-slate-100 dark:bg-slate-700 border-0 rounded-xl px-3 py-2 text-xs">
+                            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white w-8 h-8 rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-paper-plane text-xs"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- EXCEL IMPORT MODAL -->
+    <div id="importModal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-slate-900 dark:text-white text-base flex items-center space-x-2">
+                    <i class="fa-solid fa-file-excel text-emerald-600"></i>
+                    <span>Cargar Planilla Excel (.xlsx / .csv)</span>
+                </h3>
+                <button onclick="closeModal('importModal')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <!-- Dropzone -->
+                <div id="dropzone" onclick="document.getElementById('excelFileInput').click()" class="border-2 border-dashed border-emerald-400/60 hover:border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20 rounded-2xl p-6 text-center cursor-pointer transition">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-emerald-500 mb-2"></i>
+                    <p class="font-semibold text-slate-800 dark:text-slate-200">Arrastra tu archivo Excel (.xlsx) aquí o haz clic para seleccionar</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Soporta múltiples pestañas y formato automático de montos</p>
+                    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" onchange="handleExcelFileSelect(event)" class="hidden">
+                </div>
+
+                <!-- Live Auto-Detection Box -->
+                <div id="importSummaryBox" class="hidden bg-slate-50 dark:bg-slate-700/50 p-4 rounded-xl border border-slate-200 dark:border-slate-600 space-y-3">
+                    <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+                        <span>Resumen de Carga Automática:</span>
+                        <span id="importRowCount" class="text-emerald-500">0 filas detectadas</span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-white dark:bg-slate-800 p-2 rounded-lg border">
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Ingresos</span>
+                            <div id="importIncTotal" class="font-bold text-emerald-600">$0</div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-2 rounded-lg border">
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Gastos</span>
+                            <div id="importExpTotal" class="font-bold text-rose-600">$0</div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 p-2 rounded-lg border">
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Balance</span>
+                            <div id="importNetTotal" class="font-bold text-slate-900 dark:text-white">$0</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-2 pt-2">
+                        <input type="checkbox" id="chkReplaceData" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                        <label for="chkReplaceData" class="font-medium text-slate-700 dark:text-slate-300">Reemplazar datos actuales (borra datos de muestra anteriores)</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3 flex justify-end space-x-2">
+                <button type="button" onclick="closeModal('importModal')" class="px-4 py-2 rounded-xl font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs">Cancelar</button>
+                <button id="btnConfirmImport" disabled onclick="confirmImportExcel()" class="px-5 py-2 rounded-xl font-semibold bg-emerald-600 text-white hover:bg-emerald-700 text-xs shadow opacity-50 cursor-not-allowed">Importar Registros</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRANSACTION MODAL -->
+    <div id="transactionModal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 id="transactionModalTitle" class="font-bold text-slate-900 dark:text-white text-base">Nuevo Movimiento</h3>
+                <button onclick="closeModal('transactionModal')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="saveTransaction(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="txId">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Tipo:</label>
+                        <select id="txType" onchange="updateCategoryOptionsByTxType(this.value)" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5">
+                            <option value="GASTO">Gasto (-)</option>
+                            <option value="INGRESO">Ingreso (+)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Monto:</label>
+                        <input type="number" id="txAmount" required step="any" placeholder="0" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Descripción / Establecimiento:</label>
+                    <input type="text" id="txDesc" required oninput="autoSuggestCategory(this.value)" placeholder="Ej: Starbucks, Copec, Supermercado..." class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Categoría Auto:</label>
+                        <select id="txCategory" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5">
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Método de Pago:</label>
+                        <select id="txPayment" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5">
+                            <option value="Apple Pay">Apple Pay</option>
+                            <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+                            <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Efectivo">Efectivo</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Fecha:</label>
+                    <input type="date" id="txDate" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5">
+                </div>
+                <div class="pt-3 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('transactionModal')" class="px-4 py-2 rounded-xl font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- BUDGET MODAL -->
+    <div id="budgetModal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <h3 class="font-bold text-slate-900 dark:text-white text-base border-b border-slate-100 pb-2">Ajustar Tope de Presupuesto</h3>
+            <form onsubmit="saveBudgetLimit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium mb-1">Categoría:</label>
+                    <select id="budgetCategorySelect" class="w-full bg-slate-50 dark:bg-slate-700 border rounded-xl p-2.5">
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-medium mb-1">Límite Mensual:</label>
+                    <input type="number" id="budgetLimitInput" required placeholder="Ej: 300000" class="w-full bg-slate-50 dark:bg-slate-700 border rounded-xl p-2.5">
+                </div>
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('budgetModal')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 text-white font-semibold">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- RECURRING MODAL -->
+    <div id="recurringModal" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <h3 class="font-bold text-slate-900 dark:text-white text-base border-b border-slate-100 pb-2">Nueva Suscripción Recurrente</h3>
+            <form onsubmit="saveRecurringItem(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium mb-1">Nombre Servicio:</label>
+                    <input type="text" id="recName" required placeholder="Ej: Netflix, Internet, Luz" class="w-full bg-slate-50 dark:bg-slate-700 border rounded-xl p-2.5">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-medium mb-1">Monto Mensual:</label>
+                        <input type="number" id="recAmount" required placeholder="10990" class="w-full bg-slate-50 dark:bg-slate-700 border rounded-xl p-2.5">
+                    </div>
+                    <div>
+                        <label class="block font-medium mb-1">Día de Pago:</label>
+                        <input type="number" id="recDay" min="1" max="31" value="1" required class="w-full bg-slate-50 dark:bg-slate-700 border rounded-xl p-2.5">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium mb-1">Categoría:</label>
+                    <select id="recCategory" class="w-full bg-slate-50 dark:bg-slate-700 border rounded-xl p-2.5">
+                    </select>
+                </div>
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('recurringModal')" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 text-white font-semibold">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION POPUP -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl text-xs shadow-2xl flex items-center space-x-3 transition transform translate-y-20 opacity-0 z-50 border border-slate-700">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+        <span id="toastMsg">Operación completada exitosamente</span>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'finanzaspro-app';
+        let db = null;
+        let auth = null;
+
+        if (typeof __firebase_config !== 'undefined') {
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                const initAuth = async () => {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    setupRealtimeListener();
+                };
+                initAuth();
+            } catch (e) {
+                console.warn('Firebase init fallback:', e);
+            }
+        }
+
+        function setupRealtimeListener() {
+            if (!db) return;
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'transactions');
+            onSnapshot(colRef, (snapshot) => {
+                let updated = false;
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        const data = change.doc.data();
+                        if (data && data.id && !window.state.transactions.some(t => t.id === data.id)) {
+                            window.state.transactions.push(data);
+                            updated = true;
+                        }
+                    }
+                });
+                if (updated) {
+                    window.saveData();
+                    window.updateMonthFilterOptions();
+                    window.renderAll();
+                    window.showToast('¡Nuevo pago registrado en tiempo real!');
+                }
+            }, (error) => {
+                console.warn('Snapshot listener:', error);
+            });
+        }
+
+        window.saveToCloud = async function(tx) {
+            if (!db || !auth.currentUser) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'transactions', tx.id);
+                await setDoc(docRef, tx);
+            } catch (e) {
+                console.warn('Firestore sync error:', e);
+            }
+        };
+    </script>
+
+    <script>
+        // Pega aquí tu API Key de Google AI Studio para activar el Asistente IA (Gemini).
+        // ADVERTENCIA: en un archivo HTML estático la clave queda visible para quien vea el código
+        // fuente. Para uso en producción, mueve esta llamada a un backend/proxy propio.
+        const GEMINI_API_KEY = '';
+
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, (c) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        const CATEGORIES_EXPENSE = [
+            { name: 'Alimentación y Supermercado', icon: 'fa-cart-shopping' },
+            { name: 'Vivienda y Servicios', icon: 'fa-house' },
+            { name: 'Transporte y Combustible', icon: 'fa-car' },
+            { name: 'Salud y Farmacia', icon: 'fa-heart-pulse' },
+            { name: 'Educación y Capacitación', icon: 'fa-graduation-cap' },
+            { name: 'Ocio y Restaurantes', icon: 'fa-utensils' },
+            { name: 'Suscripciones y Streaming', icon: 'fa-tv' },
+            { name: 'Compras y Tecnología', icon: 'fa-bag-shopping' },
+            { name: 'Otros Gastos', icon: 'fa-ellipsis' }
+        ];
+
+        const CATEGORIES_INCOME = [
+            { name: 'Sueldo / Salario', icon: 'fa-money-bill-wave' },
+            { name: 'Honorarios / Freelance', icon: 'fa-laptop-code' },
+            { name: 'Inversiones y Dividendos', icon: 'fa-chart-line' },
+            { name: 'Ventas y Negocios', icon: 'fa-store' },
+            { name: 'Otros Ingresos', icon: 'fa-hand-holding-dollar' }
+        ];
+
+        // Automatic Keyword Matching Engine
+        const AUTO_CATEGORY_KEYWORDS = {
+            'Alimentación y Supermercado': ['supermercado', 'lider', 'jumbo', 'unimarc', 'santa isabel', 'walmart', 'mcdonalds', 'burguer', 'cafe', 'starbucks', 'panaderia', 'express'],
+            'Transporte y Combustible': ['copec', 'shell', 'petrobras', 'uber', 'didi', 'cabify', 'estacionamiento', 'peaje', 'metro', 'bip'],
+            'Suscripciones y Streaming': ['netflix', 'spotify', 'disney', 'youtube', 'apple', 'amazon prime', 'hbo', 'icloud', 'chatgpt'],
+            'Vivienda y Servicios': ['enel', 'aguas', 'metrogas', 'vtr', 'entel', 'movistar', 'wom', 'gasto comun', 'luz', 'agua'],
+            'Ocio y Restaurantes': ['restaurante', 'bar', 'pub', 'cine', 'cinemark', 'cinepolis', 'sushi', 'pizza', 'pedidosya', 'rappi']
+        };
+
+        window.state = {
+            currency: 'CLP',
+            transactions: [],
+            parsedImportRows: [],
+            budgets: [
+                { category: 'Alimentación y Supermercado', limit: 300000 },
+                { category: 'Vivienda y Servicios', limit: 400000 },
+                { category: 'Transporte y Combustible', limit: 120000 },
+                { category: 'Ocio y Restaurantes', limit: 80000 },
+                { category: 'Suscripciones y Streaming', limit: 35000 }
+            ],
+            recurring: [
+                { id: '1', name: 'Netflix', amount: 10990, category: 'Suscripciones y Streaming', dayOfMonth: 15 },
+                { id: '2', name: 'Spotify', amount: 4500, category: 'Suscripciones y Streaming', dayOfMonth: 1 }
+            ]
+        };
+
+        let monthlyChartInstance = null;
+        let categoryChartInstance = null;
+
+        // Auto-detect category based on text
+        function autoSuggestCategory(text) {
+            if (!text) return;
+            const lower = text.toLowerCase();
+            for (const [catName, keywords] of Object.entries(AUTO_CATEGORY_KEYWORDS)) {
+                if (keywords.some(k => lower.includes(k))) {
+                    const select = document.getElementById('txCategory');
+                    if (select) select.value = catName;
+                    break;
+                }
+            }
+        }
+
+        function autoPostRecurringPayments() {
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const dayToday = today.getDate();
+
+            let addedAny = false;
+            window.state.recurring.forEach(item => {
+                if (dayToday >= item.dayOfMonth) {
+                    const expectedDate = `${y}-${m}-${String(item.dayOfMonth).padStart(2, '0')}`;
+                    const exists = window.state.transactions.some(t => t.description === item.name && t.date === expectedDate);
+                    if (!exists) {
+                        const newTx = {
+                            id: 'rec-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                            date: expectedDate,
+                            description: item.name,
+                            category: item.category,
+                            type: 'GASTO',
+                            amount: item.amount,
+                            payment: 'Suscripción Auto'
+                        };
+                        window.state.transactions.push(newTx);
+                        if (window.saveToCloud) window.saveToCloud(newTx);
+                        addedAny = true;
+                    }
+                }
+            });
+
+            if (addedAny) {
+                window.saveData();
+                window.showToast('Suscripciones del mes registradas automáticamente');
+            }
+        }
+
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('finanzasauto_state');
+                if (saved) {
+                    window.state = JSON.parse(saved);
+                } else {
+                    // Initial clean state
+                    window.state.transactions = [
+                        { id: '1', date: new Date().toISOString().split('T')[0], description: 'Starbucks Coffee', category: 'Ocio y Restaurantes', type: 'GASTO', amount: 4500, payment: 'Apple Pay' }
+                    ];
+                }
+            } catch (e) {
+                console.warn(e);
+            }
+        }
+
+        window.saveData = function() {
+            try {
+                localStorage.setItem('finanzasauto_state', JSON.stringify(window.state));
+            } catch (e) {
+                console.warn('Save failed:', e);
+            }
+        };
+
+        function formatMoney(val) {
+            const num = Number(val) || 0;
+            const currencySymbols = { CLP: '$', USD: '$', EUR: '€', MXN: '$', ARS: '$' };
+            const sym = currencySymbols[window.state.currency] || '$';
+
+            if (window.state.currency === 'CLP' || window.state.currency === 'ARS') {
+                return `${sym}${Math.round(num).toLocaleString('es-CL')}`;
+            }
+            return `${sym}${num.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        window.showToast = function(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            if (toast && toastMsg) {
+                toastMsg.textContent = msg;
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('translate-y-20', 'opacity-0');
+                }, 3500);
+            }
+        };
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-600', 'text-white', 'shadow-lg', 'shadow-emerald-600/30');
+                btn.classList.add('hover:bg-slate-800', 'text-slate-400');
+            });
+
+            const targetSection = document.getElementById(`tab-${tabId}`);
+            if (targetSection) targetSection.classList.remove('hidden');
+
+            const navBtn = document.getElementById(`nav-${tabId}`);
+            if (navBtn) {
+                navBtn.classList.add('bg-emerald-600', 'text-white', 'shadow-lg', 'shadow-emerald-600/30');
+                navBtn.classList.remove('hover:bg-slate-800', 'text-slate-400');
+            }
+        }
+
+        window.updateMonthFilterOptions = function() {
+            const select = document.getElementById('monthFilter');
+            if (!select) return;
+
+            const currentVal = select.value || 'ALL';
+            const monthsSet = new Set();
+
+            window.state.transactions.forEach(t => {
+                if (t.date && t.date.length >= 7) {
+                    monthsSet.add(t.date.substring(0, 7));
+                }
+            });
+
+            const sortedMonths = Array.from(monthsSet).sort().reverse();
+            select.innerHTML = '<option value="ALL">Todo el Histórico</option>';
+
+            sortedMonths.forEach(m => {
+                const [yyyy, mm] = m.split('-');
+                const dateObj = new Date(parseInt(yyyy), parseInt(mm) - 1, 1);
+                const monthName = dateObj.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+                select.innerHTML += `<option value="${m}">${monthName}</option>`;
+            });
+
+            select.value = currentVal;
+        };
+
+        function getFilteredTransactions() {
+            const monthVal = document.getElementById('monthFilter')?.value || 'ALL';
+            const typeVal = document.getElementById('typeFilter')?.value || 'ALL';
+            const catVal = document.getElementById('categoryFilter')?.value || 'ALL';
+            const searchVal = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+
+            return window.state.transactions.filter(t => {
+                if (monthVal !== 'ALL' && (!t.date || !t.date.startsWith(monthVal))) return false;
+                if (typeVal !== 'ALL' && t.type !== typeVal) return false;
+                if (catVal !== 'ALL' && t.category !== catVal) return false;
+                if (searchVal) {
+                    const descMatch = (t.description || '').toLowerCase().includes(searchVal);
+                    if (!descMatch) return false;
+                }
+                return true;
+            });
+        }
+
+        function applyFilters() {
+            window.renderAll();
+        }
+
+        window.renderAll = function() {
+            renderDashboardCards();
+            renderCharts();
+            renderRecentTransactions();
+            renderFullTransactionsTable();
+            renderBudgets();
+            renderRecurring();
+            updateShortcutDisplayUrl();
+            checkBudgetAlerts();
+        };
+
+        function checkBudgetAlerts() {
+            const filtered = getFilteredTransactions();
+            const expByCat = {};
+            filtered.filter(t => t.type === 'GASTO').forEach(t => {
+                expByCat[t.category] = (expByCat[t.category] || 0) + (Number(t.amount) || 0);
+            });
+
+            let warningCategories = [];
+            window.state.budgets.forEach(b => {
+                const spent = expByCat[b.category] || 0;
+                if (b.limit > 0 && (spent / b.limit) >= 0.8) {
+                    warningCategories.push(`${b.category} (${Math.round((spent/b.limit)*100)}%)`);
+                }
+            });
+
+            const banner = document.getElementById('budgetAlertBanner');
+            const alertText = document.getElementById('budgetAlertText');
+            if (banner && alertText) {
+                if (warningCategories.length > 0) {
+                    alertText.textContent = `Atención Alerta de Presupuesto: ${warningCategories.join(', ')}`;
+                    banner.classList.remove('hidden');
+                } else {
+                    banner.classList.add('hidden');
+                }
+            }
+        }
+
+        function renderDashboardCards() {
+            const filtered = getFilteredTransactions();
+            let inc = 0, exp = 0;
+
+            filtered.forEach(t => {
+                if (t.type === 'INGRESO') inc += Number(t.amount) || 0;
+                else exp += Number(t.amount) || 0;
+            });
+
+            const net = inc - exp;
+            const savingsRate = inc > 0 ? Math.max(0, Math.round((net / inc) * 100)) : 0;
+
+            let totalBudgetLimit = window.state.budgets.reduce((acc, b) => acc + (b.limit || 0), 0);
+            let budgetPct = totalBudgetLimit > 0 ? Math.min(100, Math.round((exp / totalBudgetLimit) * 100)) : 0;
+
+            document.getElementById('cardTotalIncome').textContent = formatMoney(inc);
+            document.getElementById('cardTotalExpense').textContent = formatMoney(exp);
+            document.getElementById('cardNetBalance').textContent = formatMoney(net);
+            document.getElementById('cardSavingsRate').textContent = `Tasa de ahorro: ${savingsRate}%`;
+            document.getElementById('cardBudgetUsage').textContent = `${budgetPct}%`;
+            document.getElementById('cardBudgetBar').style.width = `${budgetPct}%`;
+        }
+
+        function renderCharts() {
+            if (typeof Chart === 'undefined') return;
+            const filtered = getFilteredTransactions();
+
+            const catMap = {};
+            filtered.filter(t => t.type === 'GASTO').forEach(t => {
+                const c = t.category || 'Otros Gastos';
+                catMap[c] = (catMap[c] || 0) + (Number(t.amount) || 0);
+            });
+
+            const ctxC = document.getElementById('categoryChart')?.getContext('2d');
+            if (ctxC) {
+                if (categoryChartInstance) categoryChartInstance.destroy();
+                categoryChartInstance = new Chart(ctxC, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(catMap).length ? Object.keys(catMap) : ['Sin gastos'],
+                        datasets: [{
+                            data: Object.values(catMap).length ? Object.values(catMap) : [1],
+                            backgroundColor: ['#10b981', '#f43f5e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // Monthly evolution: always uses full history (not the month filter) so the trend is visible.
+            const monthMap = {};
+            window.state.transactions.forEach(t => {
+                if (!t.date || t.date.length < 7) return;
+                const key = t.date.substring(0, 7);
+                if (!monthMap[key]) monthMap[key] = { inc: 0, exp: 0 };
+                if (t.type === 'INGRESO') monthMap[key].inc += Number(t.amount) || 0;
+                else monthMap[key].exp += Number(t.amount) || 0;
+            });
+
+            const sortedKeys = Object.keys(monthMap).sort().slice(-12);
+            const monthLabels = sortedKeys.map(k => {
+                const [yyyy, mm] = k.split('-');
+                return new Date(parseInt(yyyy), parseInt(mm) - 1, 1).toLocaleString('es-ES', { month: 'short', year: '2-digit' });
+            });
+
+            const ctxM = document.getElementById('monthlyChart')?.getContext('2d');
+            if (ctxM) {
+                if (monthlyChartInstance) monthlyChartInstance.destroy();
+                monthlyChartInstance = new Chart(ctxM, {
+                    type: 'bar',
+                    data: {
+                        labels: monthLabels.length ? monthLabels : ['Sin datos'],
+                        datasets: [
+                            {
+                                label: 'Ingresos',
+                                data: sortedKeys.length ? sortedKeys.map(k => monthMap[k].inc) : [0],
+                                backgroundColor: '#10b981',
+                                borderRadius: 6
+                            },
+                            {
+                                label: 'Gastos',
+                                data: sortedKeys.length ? sortedKeys.map(k => monthMap[k].exp) : [0],
+                                backgroundColor: '#f43f5e',
+                                borderRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+        }
+
+        function renderRecentTransactions() {
+            const container = document.getElementById('recentTransactionsList');
+            if (!container) return;
+
+            const items = window.state.transactions.slice(-5).reverse();
+            if (!items.length) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-6 text-xs">No hay movimientos.</div>';
+                return;
+            }
+
+            container.innerHTML = items.map(t => `
+                <div class="flex items-center justify-between py-3">
+                    <div>
+                        <h4 class="font-semibold text-slate-900 dark:text-white text-xs">${escapeHtml(t.description)}</h4>
+                        <span class="text-[10px] text-slate-400">${escapeHtml(t.category)} • ${escapeHtml(t.date)}</span>
+                    </div>
+                    <span class="font-bold text-xs ${t.type === 'INGRESO' ? 'text-emerald-600' : 'text-rose-600'}">${formatMoney(t.amount)}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderFullTransactionsTable() {
+            const container = document.getElementById('fullTransactionsTable');
+            const countText = document.getElementById('transactionCountText');
+            if (!container) return;
+
+            const filtered = getFilteredTransactions();
+            if (countText) countText.textContent = `${filtered.length} movimientos`;
+
+            if (!filtered.length) {
+                container.innerHTML = '<tr><td colspan="6" class="px-5 py-8 text-center text-slate-400">Sin movimientos registrados.</td></tr>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(t => `
+                <tr class="hover:bg-slate-50/50">
+                    <td class="px-5 py-3 text-slate-500">${escapeHtml(t.date)}</td>
+                    <td class="px-5 py-3 font-semibold">${escapeHtml(t.description)}</td>
+                    <td class="px-5 py-3"><span class="px-2 py-1 rounded-md bg-slate-100 text-[10px] font-medium">${escapeHtml(t.category)}</span></td>
+                    <td class="px-5 py-3 text-slate-500">${escapeHtml(t.payment || 'Apple Pay')}</td>
+                    <td class="px-5 py-3 text-right font-bold ${t.type === 'INGRESO' ? 'text-emerald-600' : 'text-rose-600'}">${formatMoney(t.amount)}</td>
+                    <td class="px-5 py-3 text-center space-x-2">
+                        <button onclick="deleteTransaction('${t.id}')" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderBudgets() {
+            const grid = document.getElementById('fullBudgetsGrid');
+            const quick = document.getElementById('quickBudgetList');
+            if (!grid) return;
+
+            const filtered = getFilteredTransactions();
+            const spentByCat = {};
+            filtered.filter(t => t.type === 'GASTO').forEach(t => {
+                spentByCat[t.category] = (spentByCat[t.category] || 0) + (Number(t.amount) || 0);
+            });
+
+            grid.innerHTML = window.state.budgets.map(b => {
+                const spent = spentByCat[b.category] || 0;
+                const pct = b.limit > 0 ? Math.min(100, Math.round((spent / b.limit) * 100)) : 0;
+                const colorClass = pct >= 100 ? 'bg-rose-500' : pct >= 80 ? 'bg-amber-500' : 'bg-emerald-500';
+
+                return `
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-bold text-xs text-slate-900 dark:text-white">${b.category}</h4>
+                            <button onclick="openBudgetModal('${b.category}')" class="text-[10px] text-emerald-600 font-semibold hover:underline">Editar</button>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-500">Gastado: ${formatMoney(spent)}</span>
+                            <span class="font-bold text-slate-700 dark:text-slate-300">Límite: ${formatMoney(b.limit)}</span>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                            <div class="${colorClass} h-full rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (quick) {
+                quick.innerHTML = window.state.budgets.slice(0, 3).map(b => {
+                    const spent = spentByCat[b.category] || 0;
+                    const pct = b.limit > 0 ? Math.min(100, Math.round((spent / b.limit) * 100)) : 0;
+                    return `
+                        <div class="space-y-1 text-xs">
+                            <div class="flex justify-between">
+                                <span class="font-medium text-slate-700 dark:text-slate-300">${b.category}</span>
+                                <span class="font-bold text-slate-500">${pct}%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-emerald-500 h-full rounded-full" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function renderRecurring() {
+            const list = document.getElementById('recurringList');
+            if (!list) return;
+
+            list.innerHTML = window.state.recurring.map(r => `
+                <div class="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-2xl border flex items-center justify-between text-xs">
+                    <div>
+                        <h4 class="font-bold text-slate-900 dark:text-white">${escapeHtml(r.name)}</h4>
+                        <span class="text-[10px] text-slate-400">Día ${r.dayOfMonth} de cada mes • ${escapeHtml(r.category)}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-bold text-rose-600 block">${formatMoney(r.amount)}</span>
+                        <button onclick="deleteRecurring('${r.id}')" class="text-[10px] text-rose-500 hover:underline">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openImportModal() {
+            document.getElementById('importModal').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function handleExcelFileSelect(evt) {
+            const file = evt.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    processRawExcelData(json);
+                } catch (err) {
+                    window.showToast('Error al leer archivo de Excel.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function processRawExcelData(rows) {
+            let parsed = [];
+            let incSum = 0, expSum = 0;
+
+            rows.forEach((row, idx) => {
+                if (idx === 0 || !row || row.length < 2) return;
+
+                const dateRaw = row[0] || new Date().toISOString().split('T')[0];
+                const dateStr = dateRaw instanceof Date
+                    ? dateRaw.toISOString().split('T')[0]
+                    : String(dateRaw).substring(0, 10);
+                const desc = String(row[1] || 'Importación Excel');
+                let amount = parseFloat(String(row[2] || '0').replace(/[^0-9.-]+/g, '')) || 0;
+                let type = 'GASTO';
+
+                if (row.length >= 4 && String(row[3]).toUpperCase().includes('INGR')) {
+                    type = 'INGRESO';
+                } else if (amount < 0) {
+                    amount = Math.abs(amount);
+                    type = 'GASTO';
+                }
+
+                // Auto category matching
+                let category = 'Otros Gastos';
+                const lowerDesc = desc.toLowerCase();
+                for (const [catName, keywords] of Object.entries(AUTO_CATEGORY_KEYWORDS)) {
+                    if (keywords.some(k => lowerDesc.includes(k))) {
+                        category = catName;
+                        break;
+                    }
+                }
+
+                if (type === 'INGRESO') incSum += amount;
+                else expSum += amount;
+
+                parsed.push({
+                    id: 'imp-' + idx + '-' + Date.now(),
+                    date: dateStr,
+                    description: desc,
+                    category: category,
+                    type: type,
+                    amount: amount,
+                    payment: 'Excel'
+                });
+            });
+
+            window.state.parsedImportRows = parsed;
+
+            document.getElementById('importRowCount').textContent = `${parsed.length} filas detectadas`;
+            document.getElementById('importIncTotal').textContent = formatMoney(incSum);
+            document.getElementById('importExpTotal').textContent = formatMoney(expSum);
+            document.getElementById('importNetTotal').textContent = formatMoney(incSum - expSum);
+
+            document.getElementById('importSummaryBox').classList.remove('hidden');
+            const btn = document.getElementById('btnConfirmImport');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function confirmImportExcel() {
+            if (!window.state.parsedImportRows.length) return;
+
+            if (document.getElementById('chkReplaceData').checked) {
+                window.state.transactions = [];
+            }
+
+            window.state.transactions.push(...window.state.parsedImportRows);
+            window.saveData();
+
+            window.state.parsedImportRows.forEach(tx => {
+                if (window.saveToCloud) window.saveToCloud(tx);
+            });
+
+            window.updateMonthFilterOptions();
+            window.renderAll();
+            closeModal('importModal');
+            window.showToast('¡Planilla de Excel importada automáticamente!');
+        }
+
+        function updateShortcutDisplayUrl() {
+            const display = document.getElementById('shortcutUrlDisplay');
+            if (display) {
+                const baseUrl = window.location.origin + window.location.pathname;
+                display.textContent = `${baseUrl}?monto=[Monto]&desc=[Comercio]`;
+            }
+        }
+
+        function copyShortcutUrl() {
+            const display = document.getElementById('shortcutUrlDisplay');
+            if (display) {
+                navigator.clipboard.writeText(display.textContent);
+                window.showToast('¡Enlace de Atajo copiado!');
+            }
+        }
+
+        function checkURLAutoTransaction() {
+            const params = new URLSearchParams(window.location.search);
+            const amount = parseFloat(params.get('monto') || params.get('amount'));
+            const desc = params.get('desc') || params.get('comercio');
+
+            if (amount && !isNaN(amount)) {
+                let category = 'Ocio y Restaurantes';
+                const lowerDesc = (desc || '').toLowerCase();
+                for (const [catName, keywords] of Object.entries(AUTO_CATEGORY_KEYWORDS)) {
+                    if (keywords.some(k => lowerDesc.includes(k))) {
+                        category = catName;
+                        break;
+                    }
+                }
+
+                const newTx = {
+                    id: Date.now().toString(),
+                    date: new Date().toISOString().split('T')[0],
+                    description: desc || 'Pago Apple Pay',
+                    category: category,
+                    type: 'GASTO',
+                    amount: amount,
+                    payment: 'Apple Pay'
+                };
+
+                window.state.transactions.push(newTx);
+                window.saveData();
+                if (window.saveToCloud) window.saveToCloud(newTx);
+                window.updateMonthFilterOptions();
+                window.renderAll();
+                window.showToast(`¡Pago de ${formatMoney(amount)} registrado automáticamente!`);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        function simulateApplePayShortcut() {
+            const amount = parseFloat(document.getElementById('appleTestAmount')?.value) || 4500;
+            const desc = document.getElementById('appleTestDesc')?.value || 'Starbucks Coffee';
+
+            let category = 'Ocio y Restaurantes';
+            const lowerDesc = desc.toLowerCase();
+            for (const [catName, keywords] of Object.entries(AUTO_CATEGORY_KEYWORDS)) {
+                if (keywords.some(k => lowerDesc.includes(k))) {
+                    category = catName;
+                    break;
+                }
+            }
+
+            const newTx = {
+                id: Date.now().toString(),
+                date: new Date().toISOString().split('T')[0],
+                description: desc,
+                category: category,
+                type: 'GASTO',
+                amount: amount,
+                payment: 'Apple Pay'
+            };
+
+            window.state.transactions.push(newTx);
+            window.saveData();
+            if (window.saveToCloud) window.saveToCloud(newTx);
+            window.updateMonthFilterOptions();
+            window.renderAll();
+            window.showToast(`¡Pago de ${formatMoney(amount)} registrado al instante!`);
+        }
+
+        function openTransactionModal() {
+            document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
+            updateCategoryOptionsByTxType('GASTO');
+            document.getElementById('transactionModal').classList.remove('hidden');
+        }
+
+        function updateCategoryOptionsByTxType(type) {
+            const select = document.getElementById('txCategory');
+            if (!select) return;
+
+            const cats = type === 'INGRESO' ? CATEGORIES_INCOME : CATEGORIES_EXPENSE;
+            select.innerHTML = cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        }
+
+        function saveTransaction(e) {
+            e.preventDefault();
+            const newTx = {
+                id: Date.now().toString(),
+                type: document.getElementById('txType').value,
+                amount: parseFloat(document.getElementById('txAmount').value) || 0,
+                description: document.getElementById('txDesc').value,
+                category: document.getElementById('txCategory').value,
+                payment: document.getElementById('txPayment').value,
+                date: document.getElementById('txDate').value
+            };
+
+            window.state.transactions.push(newTx);
+            window.saveData();
+            if (window.saveToCloud) window.saveToCloud(newTx);
+            window.updateMonthFilterOptions();
+            window.renderAll();
+            closeModal('transactionModal');
+            window.showToast('Movimiento guardado con éxito');
+        }
+
+        function deleteTransaction(id) {
+            if (!confirm('¿Eliminar este movimiento? Esta acción no se puede deshacer.')) return;
+            window.state.transactions = window.state.transactions.filter(t => t.id !== id);
+            window.saveData();
+            window.updateMonthFilterOptions();
+            window.renderAll();
+            window.showToast('Movimiento eliminado');
+        }
+
+        function clearAllTransactions() {
+            if (!confirm('¿Vaciar TODOS los movimientos registrados? Esta acción no se puede deshacer.')) return;
+            window.state.transactions = [];
+            window.saveData();
+            window.updateMonthFilterOptions();
+            window.renderAll();
+            window.showToast('Todos los datos han sido vaciados');
+        }
+
+        function exportToCSV() {
+            let csv = 'Fecha,Descripcion,Categoria,Tipo,Monto,Metodo\n';
+            window.state.transactions.forEach(t => {
+                csv += `"${t.date}","${t.description}","${t.category}","${t.type}",${t.amount},"${t.payment}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', `FinanzasAuto_Export_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function openBudgetModal(catName) {
+            const select = document.getElementById('budgetCategorySelect');
+            select.innerHTML = CATEGORIES_EXPENSE.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+            if (catName) select.value = catName;
+            document.getElementById('budgetModal').classList.remove('hidden');
+        }
+
+        function openAddBudgetModal() {
+            openBudgetModal();
+        }
+
+        function saveBudgetLimit(e) {
+            e.preventDefault();
+            const cat = document.getElementById('budgetCategorySelect').value;
+            const limit = parseFloat(document.getElementById('budgetLimitInput').value) || 0;
+
+            const existing = window.state.budgets.find(b => b.category === cat);
+            if (existing) {
+                existing.limit = limit;
+            } else {
+                window.state.budgets.push({ category: cat, limit: limit });
+            }
+
+            window.saveData();
+            window.renderAll();
+            closeModal('budgetModal');
+            window.showToast('Tope de presupuesto actualizado');
+        }
+
+        function openRecurringModal() {
+            const select = document.getElementById('recCategory');
+            select.innerHTML = CATEGORIES_EXPENSE.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+            document.getElementById('recurringModal').classList.remove('hidden');
+        }
+
+        function saveRecurringItem(e) {
+            e.preventDefault();
+            const newItem = {
+                id: Date.now().toString(),
+                name: document.getElementById('recName').value,
+                amount: parseFloat(document.getElementById('recAmount').value) || 0,
+                dayOfMonth: parseInt(document.getElementById('recDay').value) || 1,
+                category: document.getElementById('recCategory').value
+            };
+
+            window.state.recurring.push(newItem);
+            window.saveData();
+            autoPostRecurringPayments();
+            window.renderAll();
+            closeModal('recurringModal');
+            window.showToast('Suscripción recurrente guardada');
+        }
+
+        function deleteRecurring(id) {
+            if (!confirm('¿Eliminar esta suscripción recurrente?')) return;
+            window.state.recurring = window.state.recurring.filter(r => r.id !== id);
+            window.saveData();
+            window.renderAll();
+            window.showToast('Suscripción eliminada');
+        }
+
+        function changeCurrency(val) {
+            window.state.currency = val;
+            window.saveData();
+            window.renderAll();
+        }
+
+        async function generateAIFinancialAnalysis() {
+            const status = document.getElementById('aiAnalysisStatus');
+            const container = document.getElementById('aiAnalysisContainer');
+            if (status) status.textContent = 'Analizando transacciones con Gemini...';
+
+            if (!GEMINI_API_KEY) {
+                if (container) {
+                    container.innerHTML = `<div class="p-4 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400">Falta configurar la API Key de Gemini (constante GEMINI_API_KEY al inicio del script) para generar el diagnóstico.</div>`;
+                }
+                if (status) status.textContent = 'API Key no configurada';
+                return;
+            }
+
+            const summaryPrompt = `
+                Analiza las finanzas personales de este usuario y entrega un informe estructurado de salud financiera en castellano en 3 párrafos cortos:
+                - Ingresos Totales: ${formatMoney(window.state.transactions.filter(t=>t.type==='INGRESO').reduce((a,b)=>a+(b.amount||0),0))}
+                - Gastos Totales: ${formatMoney(window.state.transactions.filter(t=>t.type==='GASTO').reduce((a,b)=>a+(b.amount||0),0))}
+                - Total de movimientos: ${window.state.transactions.length}
+                Provee diagnósticos concretos y oportunidades de ahorro.
+            `;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: summaryPrompt }] }] })
+                });
+
+                const data = await response.json();
+                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No se pudo generar el análisis en este momento.';
+
+                if (container) {
+                    container.innerHTML = `<div class="p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200 dark:border-emerald-800 text-slate-800 dark:text-slate-200 leading-relaxed">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
+                }
+                if (status) status.textContent = 'Diagnóstico completado';
+            } catch (e) {
+                if (status) status.textContent = 'Error al consultar IA';
+            }
+        }
+
+        async function sendAIChatMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('aiChatInput');
+            const history = document.getElementById('aiChatHistory');
+            if (!input || !input.value.trim() || !history) return;
+
+            const q = input.value.trim();
+            input.value = '';
+
+            history.innerHTML += `<div class="bg-emerald-600 text-white p-2.5 rounded-2xl rounded-tr-none max-w-[85%] ml-auto text-xs mb-2">${escapeHtml(q)}</div>`;
+            history.scrollTop = history.scrollHeight;
+
+            if (!GEMINI_API_KEY) {
+                history.innerHTML += `<div class="text-amber-600 text-xs">Falta configurar la API Key de Gemini (constante GEMINI_API_KEY) para usar el asistente.</div>`;
+                history.scrollTop = history.scrollHeight;
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: `Responde como un asesor financiero experto: ${q}` }] }] })
+                });
+
+                const data = await response.json();
+                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Entendido.';
+
+                history.innerHTML += `<div class="bg-slate-100 dark:bg-slate-700/60 p-2.5 rounded-2xl rounded-tl-none max-w-[85%] text-slate-800 dark:text-slate-200 text-xs mb-2">${escapeHtml(text)}</div>`;
+                history.scrollTop = history.scrollHeight;
+            } catch (e) {
+                history.innerHTML += `<div class="text-rose-500 text-xs">Error de conexión con la IA.</div>`;
+            }
+        }
+
+        window.onload = function() {
+            loadData();
+            autoPostRecurringPayments();
+            checkURLAutoTransaction();
+
+            // Populate Category Select Filters
+            const catFilter = document.getElementById('categoryFilter');
+            if (catFilter) {
+                catFilter.innerHTML = '<option value="ALL">Todas las Categorías</option>' +
+                    [...CATEGORIES_EXPENSE, ...CATEGORIES_INCOME].map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+            }
+
+            window.updateMonthFilterOptions();
+            window.renderAll();
+        };
+    </script>
+</body>
+</html>
