@@ -200,6 +200,26 @@
     .ruta-progreso-fila{ flex-direction:column; align-items:flex-start; gap:.6rem; }
     .ruta-reset{ align-self:stretch; text-align:center; }
   }
+  .ruta-indice{ margin-top:1rem; }
+  .ruta-indice-tit{ font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; font-weight:700; color:#64748b; margin-bottom:.5rem; }
+  .ruta-indice ol{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.15rem; }
+  .ruta-indice a{ display:flex; align-items:center; gap:.55rem; padding:.4rem .5rem; border-radius:.45rem; border-left:2px solid transparent; color:#94a3b8; font-size:.76rem; line-height:1.3; transition:background-color .15s, color .15s; }
+  .ruta-indice a:hover{ background:rgba(20,184,166,.08); color:#e2e8f0; }
+  .ruta-indice a:focus-visible{ outline:2px solid #2dd4bf; outline-offset:2px; }
+  .ruta-indice-n{ flex:0 0 auto; width:1.35rem; height:1.35rem; border-radius:999px; background:#1e293b; border:1px solid var(--border); font-size:.65rem; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .ruta-indice-t{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ruta-indice a.hecho .ruta-indice-n{ background:#0f766e; border-color:#14b8a6; color:#fff; }
+  .ruta-indice a.activo{ background:rgba(20,184,166,.1); border-left-color:var(--teal); color:#f1f5f9; font-weight:600; }
+
+  /* En pantallas angostas el lateral no queda fijo: el indice se vuelve una
+     tira horizontal de numeros, para no anteponer una lista larga a los pasos. */
+  @media (max-width:1023px){
+    .ruta-indice ol{ flex-direction:row; gap:.4rem; overflow-x:auto; padding-bottom:.3rem; }
+    .ruta-indice a{ border-left:0; border-bottom:2px solid transparent; padding:.3rem .35rem; }
+    .ruta-indice a.activo{ border-left:0; border-bottom-color:var(--teal); }
+    .ruta-indice-t{ display:none; }
+  }
+
   .ruta-progreso-fila{ display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.7rem; }
   .ruta-reset{ background:transparent; border:1px solid var(--border); color:#94a3b8; font-size:.72rem; padding:.35rem .7rem; border-radius:.4rem; }
   .ruta-reset:hover{ border-color:var(--teal); color:#2dd4bf; }
@@ -207,7 +227,7 @@
   .ruta-barra span{ display:block; height:100%; width:0%; background:linear-gradient(90deg,#0d9488,#2dd4bf); transition:width .25s ease; }
 
   .ruta-lista{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; }
-  .ruta-paso{ display:grid; grid-template-columns:2.2rem 1fr; gap:1rem; }
+  .ruta-paso{ display:grid; grid-template-columns:2.2rem 1fr; gap:1rem; scroll-margin-top:5.5rem; }
   .ruta-marca{ display:flex; flex-direction:column; align-items:center; gap:.4rem; }
   .ruta-n{ flex:0 0 auto; width:2.2rem; height:2.2rem; border-radius:999px; background:#1e293b; border:1px solid var(--border); color:#94a3b8; font-size:.85rem; font-weight:700; display:flex; align-items:center; justify-content:center; transition:all .2s; }
   .ruta-linea{ flex:1 1 auto; width:2px; background:var(--border); border-radius:2px; }
@@ -308,10 +328,15 @@
         </div>
         <p class="text-xs text-slate-400" style="margin-top:.55rem">Tu avance se guarda solo en este navegador.</p>
       </div>
+
+      <nav id="rutaIndice" class="ruta-indice" aria-label="Indice de la ruta de estudio">
+        <p class="ruta-indice-tit">Saltar a un paso</p>
+        <ol></ol>
+      </nav>
     </aside>
 
     <ol class="ruta-lista">
-      <li class="ruta-paso" data-paso="1">
+      <li id="paso-1" class="ruta-paso" data-paso="1">
         <div class="ruta-marca">
           <span class="ruta-n">1</span>
           <span class="ruta-linea" aria-hidden="true"></span>
@@ -331,7 +356,7 @@
           </label>
         </div>
       </li>
-      <li class="ruta-paso" data-paso="2">
+      <li id="paso-2" class="ruta-paso" data-paso="2">
         <div class="ruta-marca">
           <span class="ruta-n">2</span>
           <span class="ruta-linea" aria-hidden="true"></span>
@@ -351,7 +376,7 @@
           </label>
         </div>
       </li>
-      <li class="ruta-paso" data-paso="3">
+      <li id="paso-3" class="ruta-paso" data-paso="3">
         <div class="ruta-marca">
           <span class="ruta-n">3</span>
           <span class="ruta-linea" aria-hidden="true"></span>
@@ -371,7 +396,7 @@
           </label>
         </div>
       </li>
-      <li class="ruta-paso" data-paso="4">
+      <li id="paso-4" class="ruta-paso" data-paso="4">
         <div class="ruta-marca">
           <span class="ruta-n">4</span>
           <span class="ruta-linea" aria-hidden="true"></span>
@@ -391,7 +416,7 @@
           </label>
         </div>
       </li>
-      <li class="ruta-paso" data-paso="5">
+      <li id="paso-5" class="ruta-paso" data-paso="5">
         <div class="ruta-marca">
           <span class="ruta-n">5</span>
           <span class="ruta-linea" aria-hidden="true"></span>
@@ -411,7 +436,7 @@
           </label>
         </div>
       </li>
-      <li class="ruta-paso" data-paso="6">
+      <li id="paso-6" class="ruta-paso" data-paso="6">
         <div class="ruta-marca">
           <span class="ruta-n">6</span>
           <span class="ruta-linea" aria-hidden="true"></span>
@@ -431,7 +456,7 @@
           </label>
         </div>
       </li>
-      <li class="ruta-paso" data-paso="7">
+      <li id="paso-7" class="ruta-paso" data-paso="7">
         <div class="ruta-marca">
           <span class="ruta-n">7</span>
           <span class="ruta-linea" aria-hidden="true"></span>
@@ -451,7 +476,7 @@
           </label>
         </div>
       </li>
-      <li class="ruta-paso" data-paso="8">
+      <li id="paso-8" class="ruta-paso" data-paso="8">
         <div class="ruta-marca">
           <span class="ruta-n">8</span>
           <span class="ruta-linea" aria-hidden="true"></span>
@@ -471,7 +496,7 @@
           </label>
         </div>
       </li>
-      <li class="ruta-paso" data-paso="9">
+      <li id="paso-9" class="ruta-paso" data-paso="9">
         <div class="ruta-marca">
           <span class="ruta-n">9</span>
           <span class="ruta-linea" aria-hidden="true"></span>
@@ -491,7 +516,7 @@
           </label>
         </div>
       </li>
-      <li class="ruta-paso" data-paso="10">
+      <li id="paso-10" class="ruta-paso" data-paso="10">
         <div class="ruta-marca">
           <span class="ruta-n">10</span>
           <span class="ruta-linea" aria-hidden="true"></span>
@@ -2161,13 +2186,55 @@
   }
   function rutaPintar() {
     const hechos = rutaChecks.filter(c => c.checked).length;
-    rutaChecks.forEach(c => c.closest('.ruta-paso').classList.toggle('hecho', c.checked));
+    rutaChecks.forEach(c => {
+      c.closest('.ruta-paso').classList.toggle('hecho', c.checked);
+      const enlace = rutaEnlaces.get(c.dataset.check);
+      if (enlace) enlace.classList.toggle('hecho', c.checked);
+    });
     rutaBarra.style.width = (hechos / rutaChecks.length * 100) + '%';
     rutaBarra.parentElement.setAttribute('aria-valuenow', hechos);
     rutaEstado.textContent = hechos === rutaChecks.length
       ? '¡Ruta completa! 10 de 10 pasos estudiados'
       : `${hechos} de ${rutaChecks.length} pasos estudiados`;
   }
+  // Indice lateral: se arma desde los propios pasos, para que titulos y
+  // numeracion no puedan desincronizarse del contenido.
+  const rutaIndiceOl = document.querySelector('#rutaIndice ol');
+  const rutaEnlaces = new Map();
+
+  document.querySelectorAll('.ruta-paso').forEach(paso => {
+    const n = paso.dataset.paso;
+    const titulo = paso.querySelector('.ruta-cabecera h3').textContent.trim();
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = '#paso-' + n;
+    a.innerHTML = `<span class="ruta-indice-n">${n}</span><span class="ruta-indice-t"></span>`;
+    a.querySelector('.ruta-indice-t').textContent = titulo;
+    a.title = `Paso ${n}: ${titulo}`;
+    li.appendChild(a);
+    rutaIndiceOl.appendChild(li);
+    rutaEnlaces.set(n, a);
+  });
+
+  function rutaMarcarActivo(n) {
+    rutaEnlaces.forEach((a, k) => a.classList.toggle('activo', k === n));
+  }
+
+  // El paso activo es el primero que cruza la franja superior de la pantalla.
+  if ('IntersectionObserver' in window) {
+    const visibles = new Set();
+    const obs = new IntersectionObserver(entradas => {
+      entradas.forEach(e => {
+        const n = e.target.dataset.paso;
+        if (e.isIntersecting) visibles.add(n); else visibles.delete(n);
+      });
+      if (!visibles.size) return;
+      const primero = [...visibles].sort((a, b) => Number(a) - Number(b))[0];
+      rutaMarcarActivo(primero);
+    }, { rootMargin: '-88px 0px -65% 0px', threshold: 0 });
+    document.querySelectorAll('.ruta-paso').forEach(el => obs.observe(el));
+  }
+
   const rutaHechos = rutaLeer();
   rutaChecks.forEach(c => { c.checked = rutaHechos.indexOf(c.dataset.check) !== -1; });
   rutaChecks.forEach(c => c.addEventListener('change', () => {
