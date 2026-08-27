@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Claude + Sketchfab: Laboratorio Cardíaco</title>
+    <style>
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #0f141c; }
+        #sketchfab-iframe { width: 70%; height: 100%; border: none; }
+        #panel-control { width: 30%; padding: 25px; box-sizing: border-box; color: white; background: #161b22; border-left: 1px solid #30363d; }
+        h1 { font-size: 20px; color: #58a6ff; margin-top: 0; }
+        p { font-size: 13px; color: #8b949e; }
+        .status { color: #56d364; font-weight: bold; }
+    </style>
+    <!-- Enlace oficial al Viewer API de Sketchfab (debe apuntar al script JS, no a sketchfab.com) -->
+    <script type="text/javascript" src="https://static.sketchfab.com/api/sketchfab-viewer-1.12.1.js"></script>
+</head>
+<body>
+
+    <!-- El iframe donde se cargará el corazón en 3D -->
+    <iframe src="" id="sketchfab-iframe" allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered web-share></iframe>
+
+    <div id="panel-control">
+        <h1>Control Cardíaco por Claude</h1>
+        <p>Estado de la API: <span id="api-status" class="status">Cargando...</span></p>
+        <p>Claude enviará comandos JSON aquí para manipular de forma inteligente las capas de este corazón.</p>
+    </div>
+
+    <script>
+        // UID del modelo 3D
+        const modelUid = '54fa880728d14c11afff78be8721620a';
+        const iframe = document.getElementById('sketchfab-iframe');
+
+        const client = new Sketchfab('1.12.1', iframe);
+        let apiControl = null;
+
+        // Inicializar el visor
+        client.init(modelUid, {
+            success: function onSuccess(api) {
+                api.start();
+                api.addEventListener('viewerready', function() {
+                    apiControl = api;
+                    document.getElementById('api-status').innerText = "¡Conectado y Listo!";
+                    console.log("Sketchfab API cargada correctamente.");
+
+                    api.getMaterialList(function(err, materials) {
+                        console.log("Materiales del corazón detectados:", materials);
+                    });
+                });
+            },
+            error: function onError() {
+                document.getElementById('api-status').innerText = "Error de conexión";
+            },
+            autostart: 1,
+            preload: 1
+        });
+
+        // Función para ejecutar las acciones interactivas
+        function ejecutarAccionClaude(jsonComando) {
+            if (!apiControl) return console.error("El visor 3D aún no está listo.");
+
+            try {
+                const comando = JSON.parse(jsonComando);
+
+                if (comando.accion === "cambiar_visibilidad") {
+                    apiControl.getMaterialList(function(err, materials) {
+                        materials.forEach(mat => {
+                            if (mat.name.toLowerCase().includes(comando.nombrePieza.toLowerCase())) {
+                                mat.channels.Opacity.factor = comando.visible ? 1.0 : 0.0;
+                                apiControl.setMaterial(mat);
+                            }
+                        });
+                    });
+                }
+
+                if (comando.accion === "mover_camara") {
+                    apiControl.setCameraLookAt(comando.pos, comando.target, 2.0);
+                }
+
+            } catch (error) {
+                console.error("Error procesando la instrucción", error);
+            }
+        }
+    </script>
+</body>
+</html>
