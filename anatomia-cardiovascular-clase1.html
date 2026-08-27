@@ -13,7 +13,9 @@
   *{ box-sizing:border-box; }
   body{ background:var(--bg); color:var(--text); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin:0; }
   h1,h2,h3,h4,p,ul,table{ margin:0; }
-  button{ font:inherit; cursor:pointer; }
+  /* Los <button> traen fondo y borde propios del navegador: sin neutralizarlos
+     quedaba texto claro sobre el gris por defecto (ilegible) en el quiz. */
+  button{ font:inherit; cursor:pointer; background-color:transparent; background-image:none; color:inherit; border:0; }
   a{ color:inherit; text-decoration:none; }
 
   /* ---- Utilidades (reemplazo local de Tailwind, sin CDN externo) ---- */
@@ -108,10 +110,27 @@
   .flip-back{ background:linear-gradient(135deg,#0f172a,#1e293b); border:1px solid var(--amber); transform:rotateY(180deg); }
   .nav-link{ transition: all .2s; }
   .nav-link:hover{ color:var(--teal); }
-  .quiz-option{ transition: all .15s; }
+  .quiz-option{ transition: border-color .15s, background-color .15s; cursor:pointer; }
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
+  }
   .quiz-option:hover{ border-color:var(--teal); background:rgba(20,184,166,0.08); }
+  .quiz-option:focus-visible{ outline:2px solid #2dd4bf; outline-offset:2px; border-color:var(--teal); }
   .quiz-option.correct{ border-color:#14b8a6; background:rgba(20,184,166,0.2); }
   .quiz-option.incorrect{ border-color:#f43f5e; background:rgba(244,63,94,0.2); }
+  .quiz-option.answered{ cursor:default; }
+  .quiz-option.answered:hover{ border-color:#334155; background:transparent; }
+  .quiz-option.answered.correct:hover{ border-color:#14b8a6; background:rgba(20,184,166,0.2); }
+  .quiz-option.answered.incorrect:hover{ border-color:#f43f5e; background:rgba(244,63,94,0.2); }
+  .quiz-tema{ font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; font-weight:700; color:#64748b; margin-bottom:.4rem; }
+  .quiz-score-num{ font-variant-numeric:tabular-nums; color:#2dd4bf; font-size:1.05rem; }
+  .quiz-resumen{ margin-top:1rem; display:flex; flex-direction:column; gap:.6rem; }
+  .quiz-resumen[hidden]{ display:none; }
+  .quiz-resumen p{ font-size:.82rem; color:#cbd5e1; line-height:1.6; }
+  .quiz-resumen-tit{ font-size:.95rem !important; font-weight:700; color:#f1f5f9 !important; }
+  .quiz-resumen-chips{ display:flex; flex-wrap:wrap; gap:.45rem; margin-top:.2rem; }
+  .ruta-link:focus-visible, .view-btn:focus-visible, .mode-btn:focus-visible, .sf-btn:focus-visible,
+  .ruta-reset:focus-visible, .nav-link:focus-visible{ outline:2px solid #2dd4bf; outline-offset:2px; }
   table.data-table th{ background:rgba(20,184,166,0.12); }
   table.data-table td, table.data-table th{ border:1px solid var(--border); padding:0.6rem 0.9rem; }
   .scroll-x{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
@@ -1104,10 +1123,10 @@
 <!-- QUIZ -->
 <section id="quiz" class="max-w-6xl mx-auto px-4 py-6 pb-16 section-title">
   <h2 class="text-xl sm:text-2xl font-bold mb-2 flex items-center gap-2">🧠 Quiz de Consolidación</h2>
-  <p class="text-sm text-slate-400 mb-4">Responde y revisa la retroalimentación de cada opción.</p>
+  <p class="text-sm text-slate-400 mb-4">Quince preguntas de razonamiento sobre toda la clase. Cada opción explica por qué es correcta o no, y al terminar verás qué pasos de la Ruta conviene repasar. Las opciones se barajan en cada intento.</p>
   <div id="quizContainer" class="space-y-6"></div>
   <div class="card rounded-xl p-5 mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-    <p id="quizScore" class="text-slate-200 font-semibold">Responde todas las preguntas para ver tu puntaje.</p>
+    <p id="quizScore" class="text-slate-200 font-semibold"></p>
     <button id="resetQuiz" class="tap-btn bg-teal-600 hover:bg-teal-500 text-white font-semibold px-5 py-2 rounded-lg">Reiniciar Quiz</button>
   </div>
 </section>
@@ -1852,6 +1871,7 @@
   // Quiz data
   const quiz = [
     {
+      tema: "Configuración interna · Tabiques", paso: 3,
       q: "¿Por qué no debería existir, en condiciones normales, paso directo de sangre entre una aurícula y el ventrículo contralateral o entre ambos ventrículos?",
       options: [
         { text: "Porque el tabique cardíaco (interauricular, interventricular y auriculoventricular) separa completamente las cavidades salvo por los orificios AV con válvula.", correct: true, feedback: "Correcto. La clase señala explícitamente que 'de manera normal no hay comunicación entre aurículas y ventrículos' salvo a través del orificio auriculoventricular provisto de válvula." },
@@ -1861,6 +1881,7 @@
       ]
     },
     {
+      tema: "Sistema de conducción", paso: 7,
       q: "Un paciente tiene un bloqueo a nivel del fascículo auriculoventricular (Haz de His). Anatómicamente, ¿por dónde discurre esta estructura?",
       options: [
         { text: "Por la porción membranosa del tabique interventricular.", correct: true, feedback: "Correcto. La clase indica que el fascículo auriculoventricular (Haz de His) corre por la porción membranosa del tabique interventricular y luego se divide en dos ramas." },
@@ -1870,6 +1891,7 @@
       ]
     },
     {
+      tema: "Cavidades · Comparación VD/VI", paso: 4,
       q: "El ventrículo derecho tiene una pared de solo 4-6 mm, mucho más delgada que la del ventrículo izquierdo. ¿Qué explica esta diferencia según la anatomía funcional de cada cámara?",
       options: [
         { text: "El ventrículo derecho bombea contra la baja resistencia de la circulación pulmonar, mientras el izquierdo lo hace contra la alta resistencia de la circulación sistémica.", correct: true, feedback: "Correcto. El ventrículo izquierdo impulsa sangre hacia la circulación sistémica (mayor resistencia y presión), lo que exige mayor espesor de miocardio; el derecho trabaja con menor poscarga." },
@@ -1879,6 +1901,7 @@
       ]
     },
     {
+      tema: "Sistema de conducción", paso: 7,
       q: "¿Cuál es la secuencia correcta del sistema de conducción intrínseco del corazón, según la anatomía revisada en clase?",
       options: [
         { text: "Nodo sinoauricular → Nodo auriculoventricular → Haz de His → Red de Purkinje.", correct: true, feedback: "Correcto. Esta es la secuencia descrita: el nodo SA genera el impulso, el nodo AV lo retrasa, el Haz de His lo conduce por el tabique y la red de Purkinje lo distribuye a los ventrículos." },
@@ -1888,6 +1911,7 @@
       ]
     },
     {
+      tema: "Circulación mayor y menor", paso: 8,
       q: "Durante la circulación pulmonar, ¿qué estructuras recorre la sangre en orden desde que sale del corazón hasta que retorna a él?",
       options: [
         { text: "Ventrículo derecho → arteria pulmonar → capilares pulmonares → venas pulmonares → aurícula izquierda.", correct: true, feedback: "Correcto. Así lo describe la clase: 'Comprende: ventrículo derecho, arteria pulmonar, capilares pulmonares, venas pulmonares, aurícula izquierda'." },
@@ -1895,25 +1919,140 @@
         { text: "Aurícula derecha → arteria pulmonar → capilares pulmonares → ventrículo izquierdo.", correct: false, feedback: "Incorrecto: la arteria pulmonar nace del ventrículo derecho, no de la aurícula derecha, y el retorno pulmonar llega a la aurícula izquierda, no al ventrículo." },
         { text: "Ventrículo derecho → venas pulmonares → capilares pulmonares → arteria pulmonar → aurícula izquierda.", correct: false, feedback: "Incorrecto: el orden de vasos está invertido; la sangre sale por la arteria pulmonar y regresa por las venas pulmonares, no al revés." }
       ]
+    },
+    {
+      tema: "Configuración interna · Aurícula derecha", paso: 4,
+      q: "Al abrir la aurícula derecha encuentras una depresión ovalada en el tabique interauricular. ¿Qué estructura es y qué representa?",
+      options: [
+        { text: "La fosa oval, vestigio del foramen oval de la circulación fetal.", correct: true, feedback: "Correcto. La clase la enumera entre los elementos de la aurícula derecha; es el resto del foramen oval que en la vida fetal permitía el paso de sangre de aurícula derecha a izquierda salteando el pulmón." },
+        { text: "El orificio del seno coronario, por donde drena la sangre venosa del propio corazón.", correct: false, feedback: "Incorrecto: el seno coronario también desemboca en la aurícula derecha, pero es un orificio de drenaje venoso, no una depresión del tabique interauricular." },
+        { text: "La cresta supraventricular, que separa el tracto de entrada del de salida.", correct: false, feedback: "Incorrecto: la cresta supraventricular pertenece al ventrículo derecho, no a la aurícula." },
+        { text: "El anillo fibroso de la válvula tricúspide.", correct: false, feedback: "Incorrecto: el anillo fibroso rodea el orificio auriculoventricular y sirve de inserción a las valvas; no es una depresión septal." }
+      ]
+    },
+    {
+      tema: "Configuración interna · Ventrículo derecho", paso: 4,
+      q: "La banda moderadora y la trabécula septomarginal son referencias que conviene reconocer. ¿En qué cavidad se encuentran?",
+      options: [
+        { text: "En el ventrículo derecho.", correct: true, feedback: "Correcto. La clase las enumera dentro del ventrículo derecho, junto con la cresta supraventricular y los tractos de entrada y salida." },
+        { text: "En el ventrículo izquierdo, sosteniendo los músculos papilares.", correct: false, feedback: "Incorrecto: el ventrículo izquierdo se caracteriza por sus dos músculos papilares y el conducto de salida aórtico, no por la banda moderadora." },
+        { text: "En la aurícula derecha, junto a los músculos pectíneos.", correct: false, feedback: "Incorrecto: los músculos pectíneos sí son de la aurícula derecha, pero la banda moderadora es ventricular." },
+        { text: "En la aurícula izquierda, cerca de las venas pulmonares.", correct: false, feedback: "Incorrecto: la aurícula izquierda se describe esencialmente por la desembocadura de las venas pulmonares." }
+      ]
+    },
+    {
+      tema: "Aparato valvular", paso: 6,
+      q: "Durante la sístole ventricular la presión intraventricular sube bruscamente. ¿Qué impide que las valvas auriculoventriculares se everten hacia la aurícula?",
+      options: [
+        { text: "Las cuerdas tendinosas, que fijan las valvas a los músculos papilares.", correct: true, feedback: "Correcto. El aparato valvular incluye anillo fibroso, valvas, cuerdas tendinosas y músculos papilares; las cuerdas (de primer, segundo y tercer orden) impiden la eversión de las valvas durante la sístole." },
+        { text: "El anillo fibroso, que se contrae y cierra el orificio por completo.", correct: false, feedback: "Incorrecto: el anillo fibroso es el marco de inserción de las valvas; no es lo que sujeta la valva contra la presión sistólica." },
+        { text: "Las válvulas semilunares, que se cierran al mismo tiempo.", correct: false, feedback: "Incorrecto: las semilunares se abren en sístole para dar salida a la sangre; no participan en sostener las valvas auriculoventriculares." },
+        { text: "La presión de la sangre auricular, que empuja las valvas desde arriba.", correct: false, feedback: "Incorrecto: en sístole la presión ventricular supera con mucho a la auricular; el sostén es mecánico, por cuerdas y papilares." }
+      ]
+    },
+    {
+      tema: "Aparato valvular", paso: 6,
+      q: "De las cuatro válvulas cardíacas, ¿cuál es la única que no tiene tres valvas?",
+      options: [
+        { text: "La mitral, que tiene dos valvas.", correct: true, feedback: "Correcto. Tricúspide, pulmonar y aórtica tienen tres valvas cada una; la mitral, en el orificio auriculoventricular izquierdo, tiene dos." },
+        { text: "La tricúspide, que tiene dos valvas.", correct: false, feedback: "Incorrecto: su propio nombre lo indica — la tricúspide tiene tres valvas, en el orificio auriculoventricular derecho." },
+        { text: "La aórtica, que tiene dos valvas semilunares.", correct: false, feedback: "Incorrecto: la aórtica tiene tres valvas semilunares, con sus senos de Valsalva." },
+        { text: "La pulmonar, que tiene cuatro valvas.", correct: false, feedback: "Incorrecto: la pulmonar tiene tres valvas semilunares en la salida del ventrículo derecho." }
+      ]
+    },
+    {
+      tema: "Sistema de conducción", paso: 7,
+      q: "Un corazón separado de toda conexión nerviosa extrínseca sigue latiendo. ¿Qué propiedad demuestra este hecho descrito en la clase?",
+      options: [
+        { text: "El automatismo del miocardio, que posee su propio sistema de conducción intrínseco.", correct: true, feedback: "Correcto. La clase señala que el miocardio tiene automatismo y que por eso un corazón aislado de toda conexión nerviosa extrínseca continúa latiendo: el impulso nace dentro del propio corazón." },
+        { text: "Que el corazón depende del sistema nervioso simpático para iniciar cada latido.", correct: false, feedback: "Incorrecto: es justamente lo contrario. La inervación extrínseca modula la frecuencia, pero no origina el latido." },
+        { text: "Que las válvulas generan el impulso al abrirse y cerrarse.", correct: false, feedback: "Incorrecto: las válvulas son estructuras mecánicas del aparato valvular; no generan impulsos eléctricos." },
+        { text: "Que el pericardio transmite el estímulo al miocardio.", correct: false, feedback: "Incorrecto: el pericardio es una envoltura; no participa en la génesis ni en la conducción del impulso." }
+      ]
+    },
+    {
+      tema: "Sistema de conducción", paso: 7,
+      q: "¿Dónde se ubica exactamente el nodo sinoauricular y por qué esa localización tiene sentido?",
+      options: [
+        { text: "En la aurícula derecha, adelante y a la derecha del orificio de la vena cava superior.", correct: true, feedback: "Correcto. La clase lo ubica así y lo llama nodo sinusal de Keith y Flack; ahí se originan las primeras contracciones del corazón embrionario." },
+        { text: "En el tabique interventricular, en su porción membranosa.", correct: false, feedback: "Incorrecto: esa es la ruta del fascículo auriculoventricular (haz de His), no la ubicación del nodo sinoauricular." },
+        { text: "En la aurícula izquierda, entre las venas pulmonares.", correct: false, feedback: "Incorrecto: el marcapasos está en el corazón derecho, no en el izquierdo." },
+        { text: "En el vértice del ventrículo izquierdo, junto a los músculos papilares.", correct: false, feedback: "Incorrecto: al vértice ventricular llega la red de Purkinje, que es el extremo distal del sistema, no su origen." }
+      ]
+    },
+    {
+      tema: "Generalidades", paso: 1,
+      q: "¿Cuál de estas descripciones corresponde a la forma y orientación del corazón según la clase?",
+      options: [
+        { text: "Pirámide triangular invertida, con la base atrás, arriba y a la derecha, y el vértice adelante y a la izquierda.", correct: true, feedback: "Correcto. Esa orientación explica por qué el vértice — formado por el ventrículo izquierdo — se proyecta hacia adelante y a la izquierda del tórax." },
+        { text: "Esfera regular centrada exactamente en la línea media del tórax.", correct: false, feedback: "Incorrecto: el corazón no es simétrico ni está centrado; se describe como una pirámide triangular invertida y oblicua." },
+        { text: "Pirámide triangular con la base adelante y a la izquierda y el vértice atrás.", correct: false, feedback: "Incorrecto: la orientación está invertida. La base mira atrás, arriba y a la derecha." },
+        { text: "Cilindro vertical con las aurículas por debajo de los ventrículos.", correct: false, feedback: "Incorrecto: las aurículas están por encima de los ventrículos, separadas por el surco coronario." }
+      ]
+    },
+    {
+      tema: "Generalidades · Capas", paso: 1,
+      q: "Ordena las capas del corazón desde la que contacta con la sangre hacia el exterior.",
+      options: [
+        { text: "Endocardio → miocardio → epicardio.", correct: true, feedback: "Correcto. El endocardio tapiza el interior en contacto con la sangre, el miocardio es la capa muscular contráctil y el epicardio la capa externa; todo ello rodeado por el pericardio." },
+        { text: "Epicardio → miocardio → endocardio.", correct: false, feedback: "Incorrecto: ese es el orden de fuera hacia adentro, no el pedido." },
+        { text: "Miocardio → endocardio → pericardio.", correct: false, feedback: "Incorrecto: el endocardio es la capa más interna, no puede quedar por dentro del miocardio en este orden." },
+        { text: "Pericardio → endocardio → miocardio.", correct: false, feedback: "Incorrecto: el pericardio es la envoltura más externa, no la capa en contacto con la sangre." }
+      ]
+    },
+    {
+      tema: "Circulación linfática", paso: 9,
+      q: "¿Cuáles son las tres funciones del sistema linfático señaladas en la clase?",
+      options: [
+        { text: "Transportar la linfa, transportar la grasa absorbida en el intestino delgado y participar en la defensa mediante los linfocitos.", correct: true, feedback: "Correcto. Son las tres funciones descritas: drenaje del líquido intersticial como linfa, transporte del quilo con las grasas absorbidas y función inmunitaria." },
+        { text: "Oxigenar la sangre, filtrar la urea y almacenar hierro.", correct: false, feedback: "Incorrecto: la oxigenación es pulmonar, la filtración de urea es renal y el almacenamiento de hierro es hepático y esplénico." },
+        { text: "Bombear sangre, regular la presión arterial y producir hormonas cardíacas.", correct: false, feedback: "Incorrecto: esas son funciones del sistema cardiovascular, no del linfático." },
+        { text: "Producir glóbulos rojos, coagular la sangre y transportar oxígeno.", correct: false, feedback: "Incorrecto: la eritropoyesis es medular y el transporte de oxígeno corresponde a la sangre, no a la linfa." }
+      ]
+    },
+    {
+      tema: "Circulación linfática", paso: 9,
+      q: "La linfa recogida en los tejidos debe volver al torrente sanguíneo. ¿Dónde desemboca finalmente?",
+      options: [
+        { text: "En las venas subclavias, a través del conducto torácico y del conducto linfático derecho.", correct: true, feedback: "Correcto. Los capilares linfáticos confluyen en conductos cada vez mayores que terminan en esos dos grandes colectores, y estos drenan en el sistema venoso a nivel de las subclavias." },
+        { text: "Directamente en la aurícula derecha, junto con las venas cavas.", correct: false, feedback: "Incorrecto: en la aurícula derecha desembocan las venas cavas y el seno coronario; la linfa se incorpora antes, a nivel venoso subclavio." },
+        { text: "En la arteria aorta, para redistribuirse a los tejidos.", correct: false, feedback: "Incorrecto: la linfa retorna al sistema venoso, nunca directamente al arterial." },
+        { text: "En los capilares pulmonares, durante la hematosis.", correct: false, feedback: "Incorrecto: en los capilares pulmonares ocurre el intercambio gaseoso; no es la vía de retorno linfático." }
+      ]
     }
   ];
 
   const quizContainer = document.getElementById('quizContainer');
   const userAnswers = new Array(quiz.length).fill(null);
+  // Orden de opciones por pregunta. Se baraja en cada render: sin esto la
+  // respuesta correcta caía siempre en la primera posición.
+  let quizOrders = [];
+
+  function barajarIndices(n) {
+    const idx = Array.from({ length: n }, (_, i) => i);
+    for (let i = idx.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [idx[i], idx[j]] = [idx[j], idx[i]];
+    }
+    return idx;
+  }
 
   function renderQuiz() {
     quizContainer.innerHTML = '';
+    quizOrders = quiz.map(item => barajarIndices(item.options.length));
+
     quiz.forEach((item, qi) => {
       const qDiv = document.createElement('div');
       qDiv.className = 'card rounded-xl p-5';
       let optionsHtml = '';
-      item.options.forEach((opt, oi) => {
+      quizOrders[qi].forEach(oi => {
         optionsHtml += `
-          <button data-q="${qi}" data-o="${oi}" class="quiz-option tap-btn w-full text-left text-sm border border-slate-700 rounded-lg px-4 py-3 mb-2 text-slate-200">
-            ${opt.text}
+          <button type="button" data-q="${qi}" data-o="${oi}" class="quiz-option tap-btn w-full text-left text-sm border border-slate-700 rounded-lg px-4 py-3 mb-2 text-slate-200">
+            ${item.options[oi].text}
           </button>`;
       });
       qDiv.innerHTML = `
+        <p class="quiz-tema">${item.tema}</p>
         <p class="font-semibold text-slate-100 mb-3">${qi + 1}. ${item.q}</p>
         <div class="options-wrap">${optionsHtml}</div>
         <div class="feedback text-sm mt-2 hidden rounded-lg p-3"></div>
@@ -1921,27 +2060,34 @@
       quizContainer.appendChild(qDiv);
     });
 
-    document.querySelectorAll('.quiz-option').forEach(btn => {
+    quizContainer.querySelectorAll('.quiz-option').forEach(btn => {
       btn.addEventListener('click', () => {
-        const qi = parseInt(btn.dataset.q);
-        if (userAnswers[qi] !== null) return; // already answered
-        const oi = parseInt(btn.dataset.o);
+        const qi = parseInt(btn.dataset.q, 10);
+        if (userAnswers[qi] !== null) return; // ya respondida
+        const oi = parseInt(btn.dataset.o, 10);
         userAnswers[qi] = oi;
         const parent = btn.closest('.card');
         const buttons = parent.querySelectorAll('.quiz-option');
         const feedbackDiv = parent.querySelector('.feedback');
         const chosen = quiz[qi].options[oi];
 
-        buttons.forEach((b, i) => {
+        buttons.forEach(b => {
+          const bi = parseInt(b.dataset.o, 10);
           b.classList.remove('correct', 'incorrect');
-          if (quiz[qi].options[i].correct) b.classList.add('correct');
-          if (i === oi && !chosen.correct) b.classList.add('incorrect');
+          if (quiz[qi].options[bi].correct) b.classList.add('correct');
+          if (bi === oi && !chosen.correct) b.classList.add('incorrect');
+          // Ya respondida: las opciones dejan de ser accionables.
+          b.classList.add('answered');
+          b.setAttribute('aria-disabled', 'true');
         });
 
         feedbackDiv.classList.remove('hidden');
         feedbackDiv.classList.add(chosen.correct ? 'badge-clinico' : 'badge-critico');
-        feedbackDiv.innerHTML = `<strong>${chosen.correct ? '✅ Correcto' : '❌ Incorrecto'}:</strong> ${chosen.feedback}
-          ${!chosen.correct ? '<br><br><strong>Respuesta correcta:</strong> ' + quiz[qi].options.find(o => o.correct).text + '<br>' + quiz[qi].options.find(o => o.correct).feedback : ''}`;
+        const correcta = quiz[qi].options.find(o => o.correct);
+        feedbackDiv.innerHTML = `<strong>${chosen.correct ? '✅ Correcto' : '❌ Incorrecto'}:</strong> ${chosen.feedback}` +
+          (!chosen.correct
+            ? `<br><br><strong>Respuesta correcta:</strong> ${correcta.text}<br>${correcta.feedback}`
+            : '');
 
         updateScore();
       });
@@ -1952,17 +2098,55 @@
     const answered = userAnswers.filter(a => a !== null).length;
     const correct = userAnswers.filter((a, i) => a !== null && quiz[i].options[a].correct).length;
     const scoreEl = document.getElementById('quizScore');
-    if (answered < quiz.length) {
-      scoreEl.textContent = `Progreso: ${answered}/${quiz.length} respondidas — ${correct} correctas hasta ahora.`;
+    const total = quiz.length;
+    const plural = n => n === 1 ? 'correcta' : 'correctas';
+
+    if (answered < total) {
+      scoreEl.innerHTML = `<span class="quiz-score-num">${answered}/${total}</span> respondidas — ${correct} ${plural(correct)} hasta ahora.`;
+      resumenEl.hidden = true;
+      return;
+    }
+
+    const pct = Math.round(correct / total * 100);
+    scoreEl.innerHTML = `<span class="quiz-score-num">${correct}/${total}</span> ${plural(correct)} (${pct}%).`;
+
+    // Qué repasar: pasos de la Ruta de las preguntas falladas.
+    const fallados = [];
+    userAnswers.forEach((a, i) => {
+      if (a === null || quiz[i].options[a].correct) return;
+      if (!fallados.some(f => f.tema === quiz[i].tema)) {
+        fallados.push({ tema: quiz[i].tema, paso: quiz[i].paso });
+      }
+    });
+
+    if (!fallados.length) {
+      resumenEl.hidden = false;
+      resumenEl.className = 'quiz-resumen badge-clinico rounded-xl p-4';
+      resumenEl.innerHTML = '<p class="quiz-resumen-tit">Quiz completo sin errores</p><p>Dominas los cinco bloques de la clase. Si quieres afianzarlo, repite el quiz: las opciones se barajan cada vez.</p>';
     } else {
-      scoreEl.textContent = `Puntaje final: ${correct}/${quiz.length} correctas.`;
+      resumenEl.hidden = false;
+      resumenEl.className = 'quiz-resumen badge-alerta rounded-xl p-4';
+      const chips = fallados
+        .sort((a, b) => a.paso - b.paso)
+        .map(f => `<a class="ruta-link" href="#ruta">Paso ${f.paso} · ${f.tema}</a>`)
+        .join('');
+      resumenEl.innerHTML =
+        `<p class="quiz-resumen-tit">Qué conviene repasar</p>` +
+        `<p>Fallaste preguntas de ${fallados.length === 1 ? 'este bloque' : 'estos bloques'}. Vuelve al paso correspondiente de la Ruta de Estudio antes de repetir el quiz.</p>` +
+        `<div class="quiz-resumen-chips">${chips}</div>`;
     }
   }
+
+  const resumenEl = document.createElement('div');
+  resumenEl.className = 'quiz-resumen';
+  resumenEl.hidden = true;
+  quizContainer.insertAdjacentElement('afterend', resumenEl);
 
   document.getElementById('resetQuiz').addEventListener('click', () => {
     userAnswers.fill(null);
     renderQuiz();
     updateScore();
+    document.getElementById('quiz').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
   renderQuiz();
