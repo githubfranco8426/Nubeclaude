@@ -257,6 +257,10 @@
   .ruta-paso.hecho .ruta-hecho{ color:#2dd4bf; }
   @media (max-width:520px){ .ruta-paso{ grid-template-columns:1.8rem 1fr; gap:.7rem; } .ruta-n{ width:1.8rem; height:1.8rem; font-size:.78rem; } }
 
+  .heart3d-latido{ position:absolute; right:.65rem; top:.65rem; z-index:2; font-size:.72rem; font-weight:600; color:#e2e8f0; background:rgba(15,23,42,.72); border:1px solid rgba(148,163,184,.3); border-radius:.45rem; padding:.35rem .6rem; }
+  .heart3d-latido:hover{ border-color:var(--teal); color:#fff; }
+  .heart3d-latido:focus-visible{ outline:2px solid #2dd4bf; outline-offset:2px; }
+
   .heart3d-nota{ font-size:.72rem; color:#64748b; line-height:1.55; margin-top:.7rem; }
   .heart3d-nota a{ color:#2dd4bf; text-decoration:underline; }
   .heart3d-nota a:focus-visible{ outline:2px solid #2dd4bf; outline-offset:2px; }
@@ -570,6 +574,7 @@
     <div class="lg:col-span-2 card rounded-xl p-3 sm:p-5">
       <div id="heart3dWrap" class="heart3d-wrap hidden">
         <canvas id="heart3dCanvas"></canvas>
+        <button id="latidoBtn" type="button" class="heart3d-latido" aria-pressed="true">⏸ Latido</button>
         <p class="heart3d-hint">Arrastra en horizontal para girar · pellizca o usa la rueda para acercar · toca una estructura</p>
       </div>
       <p id="heart3dNota" class="heart3d-nota hidden">Este modelo es esquemático: prioriza distinguir cada estructura sobre el realismo del tejido. Para un escaneo fotorrealista, <a href="https://sketchfab.com/3d-models/anatomically-correct-human-heart-54fa880728d14c11afff78be8721620a" target="_blank" rel="noopener noreferrer">abre el corazón anatómico en Sketchfab ↗</a>.</p>
@@ -1282,6 +1287,7 @@
     if (!meshRegistry[id]) meshRegistry[id] = [];
     meshRegistry[id].push({
       mesh, mat,
+      basePos: mesh.position.clone(),
       baseOpacity: mat.opacity,
       baseEmissiveHex: mat.emissive ? mat.emissive.getHex() : 0x000000,
       baseEmissiveIntensity: mat.emissiveIntensity || 0,
@@ -1410,10 +1416,26 @@
     addMesh3D(id, mesh, mat);
   }
 
+  // Vasos por los que se anima el flujo. "sentido" indica hacia donde corre la
+  // sangre respecto al orden de los puntos: las cavas y las venas pulmonares
+  // fueron trazadas desde el corazon hacia afuera, asi que entran al reves.
+  const FLUJO_VASOS = {
+    ao:     { sentido:  1, color: '#ff5f7a', arterial: true  },
+    pa:     { sentido:  1, color: '#4fd2ee', arterial: true  },
+    svc:    { sentido: -1, color: '#4fd2ee', arterial: false },
+    ivc:    { sentido: -1, color: '#4fd2ee', arterial: false },
+    pveins: { sentido: -1, color: '#ff5f7a', arterial: false }
+  };
+  const flujoCurvas = [];
+
   function vessel3D(id, colorHex, radius, points, opacity) {
     const curve = new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(p[0], p[1], p[2])));
+    if (FLUJO_VASOS[id]) flujoCurvas.push(Object.assign({ id, curve }, FLUJO_VASOS[id]));
     const geo = new THREE.TubeGeometry(curve, 40, radius, 14, false);
-    const mat = new THREE.MeshStandardMaterial({ color: colorHex, transparent: true, opacity: opacity == null ? 0.92 : opacity, roughness: 0.45, metalness: 0.04 });
+    // Los vasos por los que corre sangre van translucidos: si no, el tubo tapa
+    // las particulas que viajan por su eje.
+    const opBase = opacity == null ? (FLUJO_VASOS[id] ? 0.62 : 0.92) : opacity;
+    const mat = new THREE.MeshStandardMaterial({ color: colorHex, transparent: true, opacity: opBase, roughness: 0.45, metalness: 0.04 });
     addMesh3D(id, new THREE.Mesh(geo, mat), mat);
   }
 
@@ -1424,9 +1446,10 @@
     const mat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.5, transparent: true, opacity: 0.95 });
     const mesh = new THREE.Mesh(geo, mat);
     heartGroup.add(mesh);
-    decorMeshes.push({ mat, baseOpacity: 0.95 });
+    decorMeshes.push({ mesh, mat, baseOpacity: 0.95 });
   }
 
+  const discosValvula = {};
   function valve3D(id, pos, rot, ringR, tubeR) {
     const geo = new THREE.TorusGeometry(ringR || 0.3, tubeR || 0.06, 12, 30);
     const mat = new THREE.MeshStandardMaterial({ color: '#f1f5f9', roughness: 0.45, metalness: 0.12, transparent: true, opacity: 0.95 });
@@ -1434,6 +1457,16 @@
     mesh.position.set(pos[0], pos[1], pos[2]);
     if (rot) mesh.rotation.set(rot[0], rot[1], rot[2]);
     addMesh3D(id, mesh, mat);
+
+    // Las valvas: un disco dentro del anillo que se cierra y se abre.
+    const discoGeo = new THREE.CircleGeometry((ringR || 0.3) * 0.94, 26);
+    const discoMat = new THREE.MeshStandardMaterial({ color: '#e6edf5', roughness: 0.55, transparent: true, opacity: 0.9, side: THREE.DoubleSide });
+    const disco = new THREE.Mesh(discoGeo, discoMat);
+    disco.position.set(pos[0], pos[1], pos[2]);
+    if (rot) disco.rotation.set(rot[0], rot[1], rot[2]);
+    addMesh3D(id, disco, discoMat);
+    meshRegistry[id][meshRegistry[id].length - 1].esDiscoValvula = true;
+    discosValvula[id] = disco;
   }
 
   function papillary3D(id, colorHex, pos, rot) {
@@ -1572,13 +1605,150 @@
     camera.lookAt(target);
   }
 
+  // ===== CICLO CARDIACO =====
+  // Un ciclo completo dura DURACION_CICLO segundos. Las fracciones siguen la
+  // secuencia real: sistole auricular, contraccion isovolumetrica, eyeccion,
+  // relajacion isovolumetrica y llenado. Importa el orden, no solo el vaiven:
+  // las valvulas AV se cierran ANTES de que se abran las semilunares.
+  const DURACION_CICLO = 1.15;           // ~52 lpm: lento a proposito, para poder seguirlo
+  let faseCiclo = 0.62;                  // arranca en llenado, con el corazon casi lleno
+  let latiendo = !reducedMotion3D;
+  let ultimoCuadro = performance.now();
+
+  function suave(a, b, t) {
+    t = Math.min(1, Math.max(0, (t - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  }
+
+  // 1.00 = volumen telediastolico, 0.60 = telesistolico (fraccion de eyeccion ~40%)
+  const VOL_TELESISTOLICO = 0.60;
+  const VOL_EYECTADO = 1 - VOL_TELESISTOLICO;
+  function volVentriculo(f) {
+    if (f < 0.15) return 1.00;                                                    // lleno (incl. contraccion isovolumetrica)
+    if (f < 0.45) return 1.00 - VOL_EYECTADO * suave(0.15, 0.43, f);              // eyeccion
+    if (f < 0.50) return VOL_TELESISTOLICO;                                       // relajacion isovolumetrica
+    return VOL_TELESISTOLICO + VOL_EYECTADO * suave(0.50, 0.90, f);               // llenado
+  }
+
+  function volAuricula(f) {
+    if (f < 0.10) return 1.00 - 0.22 * suave(0.00, 0.09, f);    // sistole auricular: se vacia
+    if (f < 0.50) return 0.78 + 0.22 * suave(0.10, 0.48, f);    // se llena con la AV cerrada
+    if (f < 0.75) return 1.00 - 0.12 * suave(0.50, 0.72, f);    // vaciado rapido al abrirse la AV
+    return 0.88 + 0.12 * suave(0.75, 1.00, f);
+  }
+
+  // 1 = abierta, 0 = cerrada
+  function aperturaAV(f) {
+    if (f < 0.10) return 1;
+    if (f < 0.14) return 1 - suave(0.10, 0.14, f);
+    if (f < 0.48) return 0;
+    return suave(0.48, 0.52, f);
+  }
+  function aperturaSemilunar(f) {
+    if (f < 0.14) return 0;
+    if (f < 0.18) return suave(0.14, 0.18, f);
+    if (f < 0.43) return 1;
+    if (f < 0.47) return 1 - suave(0.43, 0.47, f);
+    return 0;
+  }
+
+  // Particulas de sangre sobre las curvas de cada vaso
+  const particulas = [];
+  function crearParticulas() {
+    const geo = new THREE.SphereGeometry(0.075, 10, 8);
+    flujoCurvas.forEach(vaso => {
+      const mat = new THREE.MeshStandardMaterial({
+        color: vaso.color, emissive: vaso.color, emissiveIntensity: 0.95,
+        roughness: 0.3, transparent: true, opacity: 0.95
+      });
+      for (let i = 0; i < 4; i++) {
+        const m = new THREE.Mesh(geo, mat);
+        const u = i / 4;
+        m.position.copy(vaso.curve.getPointAt(vaso.sentido > 0 ? u : 1 - u));
+        heartGroup.add(m);
+        particulas.push({ mesh: m, mat, vaso, u });
+      }
+    });
+  }
+
+  function moverParticulas(f, dt) {
+    // El flujo arterial es pulsatil (solo con las semilunares abiertas); el
+    // venoso es continuo, que es justo la diferencia que conviene ver.
+    const eyeccion = aperturaSemilunar(f);
+    particulas.forEach(pt => {
+      const vel = pt.vaso.arterial ? 0.05 + 1.05 * eyeccion : 0.30;
+      pt.u = (pt.u + vel * dt) % 1;
+      const t = pt.vaso.sentido > 0 ? pt.u : 1 - pt.u;
+      pt.mesh.position.copy(pt.vaso.curve.getPointAt(t));
+      pt.mat.opacity = pt.vaso.arterial ? 0.25 + 0.7 * eyeccion : 0.9;
+    });
+  }
+
+  function escalaDe(id, f) {
+    if (id === 'lv' || id === 'rv') return Math.cbrt(volVentriculo(f));
+    if (id === 'la' || id === 'ra') return Math.cbrt(volAuricula(f));
+    // El tabique y los papilares acompañan al ventriculo, mas discretos
+    if (id === 'septum' || id.indexOf('pap_') === 0) return 1 + (Math.cbrt(volVentriculo(f)) - 1) * 0.6;
+    return 1;
+  }
+
+  // La geometria de las cavidades esta en coordenadas absolutas, asi que
+  // escalarla respecto al origen la despegaria del plano valvular. Se compensa
+  // para que la base quede fija y suba el apex, que es lo que hace un corazon
+  // real. Todo lo adherido al miocardio (orejuelas, papilares, coronarias)
+  // sigue la misma transformacion o se quedaria flotando fuera.
+  const PIVOTE_BASE = 0.95;
+
+  function seguimientoDe(id, f) {
+    if (id === 'lv' || id === 'rv' || id === 'septum' || id.indexOf('pap_') === 0) return Math.cbrt(volVentriculo(f));
+    if (id === 'la' || id === 'ra') return Math.cbrt(volAuricula(f));
+    return 1;
+  }
+
+  function aplicarCiclo(f) {
+    if (!heart3DReady) return;
+    Object.keys(meshRegistry).forEach(id => {
+      const k = escalaDe(id, f);
+      const kPos = seguimientoDe(id, f);
+      meshRegistry[id].forEach(entry => {
+        if (entry.esDiscoValvula) return;                 // el disco lo maneja la apertura valvular
+        entry.mesh.scale.copy(entry.baseScale).multiplyScalar((entry.factorUI || 1) * k);
+        if (kPos !== 1) {
+          entry.mesh.position.copy(entry.basePos).multiplyScalar(kPos);
+          entry.mesh.position.y += PIVOTE_BASE * (1 - kPos);
+        }
+      });
+    });
+    const kVent = Math.cbrt(volVentriculo(f));
+    decorMeshes.forEach(d => {
+      if (!d.mesh) return;
+      d.mesh.scale.setScalar(kVent);
+      d.mesh.position.y = PIVOTE_BASE * (1 - kVent);
+    });
+    const av = 1 - 0.92 * aperturaAV(f);
+    const sl = 1 - 0.92 * aperturaSemilunar(f);
+    ['tv', 'mv'].forEach(id => { if (discosValvula[id]) discosValvula[id].scale.setScalar(av); });
+    ['pv', 'av'].forEach(id => { if (discosValvula[id]) discosValvula[id].scale.setScalar(sl); });
+    particulas.forEach(pt => { pt.mesh.visible = true; });
+  }
+
   function animate3D() {
     requestAnimationFrame(animate3D);
+    const ahora = performance.now();
+    const dt = Math.min((ahora - ultimoCuadro) / 1000, 0.05);
+    ultimoCuadro = ahora;
     if (activeView !== '3d' || !renderer) return;
     if (!userInteracted3D && !reducedMotion3D) orbitState.theta += 0.0016;
     updateCameraFromOrbit();
+
+    if (latiendo) {
+      faseCiclo = (faseCiclo + dt / DURACION_CICLO) % 1;
+      moverParticulas(faseCiclo, dt);
+    }
+    aplicarCiclo(faseCiclo);
+
     if (pulsingIds.size) {
-      const t = performance.now() * 0.001;
+      const t = ahora * 0.001;
       const pulse = 0.55 + Math.sin(t * 4.2) * 0.4;
       pulsingIds.forEach(id => {
         (meshRegistry[id] || []).forEach(entry => { entry.mat.emissiveIntensity = pulse; });
@@ -1606,11 +1776,12 @@
         else if (selected) { mat.emissive.setHex(0xffffff); mat.emissiveIntensity = 0.5; }
         else if (!pulseOn) { mat.emissive.setHex(baseEmissiveHex); mat.emissiveIntensity = baseEmissiveIntensity; }
         else { mat.emissive.setHex(baseEmissiveHex || 0xf59e0b); }
-        mesh.scale.copy(baseScale).multiplyScalar(selected ? 1.06 : 1);
+        entry.factorUI = selected ? 1.06 : 1;
       });
     });
     const anyDimmed = !!document.querySelector('.struct.dimmed');
     decorMeshes.forEach(d => { d.mat.opacity = anyDimmed ? 0.12 : d.baseOpacity; });
+    aplicarCiclo(faseCiclo);   // recompone las escalas aunque el latido este en pausa
   }
 
   function init3D() {
@@ -1627,6 +1798,7 @@
     heartGroup = new THREE.Group();
     scene.add(heartGroup);
     buildHeartMeshes();
+    crearParticulas();
 
     raycaster3d = new THREE.Raycaster();
     mouse3d = new THREE.Vector2();
@@ -1706,6 +1878,19 @@
       heartSvg.classList.remove('hidden');
     }
   }
+  const latidoBtn = document.getElementById('latidoBtn');
+  function pintarBotonLatido() {
+    latidoBtn.textContent = latiendo ? '⏸ Latido' : '▶ Latido';
+    latidoBtn.setAttribute('aria-pressed', latiendo ? 'true' : 'false');
+    latidoBtn.title = latiendo ? 'Detener el latido' : 'Animar el ciclo cardiaco';
+  }
+  latidoBtn.addEventListener('click', () => {
+    latiendo = !latiendo;
+    pintarBotonLatido();
+    if (heart3DReady) aplicarCiclo(faseCiclo);
+  });
+  pintarBotonLatido();
+
   document.querySelectorAll('.view-btn').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
   // ===== FIN MODELO 3D =====
 
