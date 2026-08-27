@@ -158,7 +158,8 @@
 
   .view-btn{ background:#1e293b; border:1px solid #334155; color:#cbd5e1; font-size:0.78rem; padding:0.55rem 0.9rem; border-radius:999px; transition:all .15s; font-weight:600; }
   .view-btn.active{ background:#7c3aed; border-color:#a78bfa; color:#fff; }
-  .heart3d-wrap{ position:relative; width:100%; height:min(62vh,520px); border-radius:0.75rem; overflow:hidden; background:radial-gradient(circle at 50% 30%, rgba(124,58,237,0.12), transparent 60%); touch-action:none; }
+  .heart3d-wrap{ position:relative; width:100%; height:min(62vh,520px); border-radius:0.75rem; overflow:hidden; background:radial-gradient(circle at 50% 30%, rgba(124,58,237,0.12), transparent 60%); touch-action:pan-y; }
+  @media (max-width:640px){ .heart3d-wrap{ height:min(52vh,420px); } }
   .heart3d-wrap canvas{ display:block; width:100%; height:100%; cursor:grab; }
   .heart3d-wrap canvas:active{ cursor:grabbing; }
   .atlas-wrap{ display:flex; flex-direction:column; gap:2.25rem; }
@@ -526,7 +527,7 @@
     <div class="lg:col-span-2 card rounded-xl p-3 sm:p-5">
       <div id="heart3dWrap" class="heart3d-wrap hidden">
         <canvas id="heart3dCanvas"></canvas>
-        <p class="heart3d-hint">Arrastra para rotar · rueda/pellizco para zoom · toca una estructura</p>
+        <p class="heart3d-hint">Arrastra en horizontal para girar · pellizca o usa la rueda para acercar · toca una estructura</p>
       </div>
       <p id="heart3dNota" class="heart3d-nota hidden">Este modelo es esquemático: prioriza distinguir cada estructura sobre el realismo del tejido. Para un escaneo fotorrealista, <a href="https://sketchfab.com/3d-models/anatomically-correct-human-heart-54fa880728d14c11afff78be8721620a" target="_blank" rel="noopener noreferrer">abre el corazón anatómico en Sketchfab ↗</a>.</p>
 
@@ -1589,9 +1590,49 @@
     canvas.addEventListener('mousedown', e => down3D(e.clientX, e.clientY));
     window.addEventListener('mousemove', e => move3D(e.clientX, e.clientY));
     window.addEventListener('mouseup', up3D);
-    canvas.addEventListener('touchstart', e => { const t = e.touches[0]; down3D(t.clientX, t.clientY); }, { passive: true });
-    canvas.addEventListener('touchmove', e => { const t = e.touches[0]; move3D(t.clientX, t.clientY); }, { passive: true });
-    canvas.addEventListener('touchend', up3D);
+    // En tactil el visor ocupa buena parte de la pantalla: el arrastre vertical
+    // debe seguir desplazando la pagina (touch-action:pan-y), asi que solo
+    // tomamos el gesto cuando es claramente horizontal. Dos dedos = pellizco.
+    let tocandoX = 0, tocandoY = 0, gesto = null, pellizco0 = 0, radio0 = 0;
+    const distancia = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+
+    canvas.addEventListener('touchstart', e => {
+      if (e.touches.length === 2) {
+        gesto = 'pellizco';
+        pellizco0 = distancia(e.touches);
+        radio0 = orbitState.radius;
+        userInteracted3D = true;
+        e.preventDefault();
+        return;
+      }
+      const t = e.touches[0];
+      tocandoX = t.clientX; tocandoY = t.clientY;
+      gesto = null;
+      didDrag3D = false;
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', e => {
+      if (gesto === 'pellizco' && e.touches.length === 2) {
+        const d = distancia(e.touches);
+        if (pellizco0 > 0) orbitState.radius = clamp3D(radio0 * (pellizco0 / d), 3.2, 11);
+        e.preventDefault();
+        return;
+      }
+      if (e.touches.length !== 1) return;
+      const t = e.touches[0];
+      const dx = t.clientX - tocandoX, dy = t.clientY - tocandoY;
+      if (!gesto) {
+        if (Math.abs(dx) + Math.abs(dy) < 8) return;
+        // Vertical: se lo dejamos al navegador para que la pagina siga bajando.
+        gesto = Math.abs(dx) > Math.abs(dy) ? 'girar' : 'desplazar';
+        if (gesto === 'girar') { down3D(t.clientX, t.clientY); userInteracted3D = true; }
+      }
+      if (gesto === 'girar') { didDrag3D = true; move3D(t.clientX, t.clientY); }
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', e => {
+      if (e.touches.length === 0) { up3D(); gesto = null; }
+    });
     canvas.addEventListener('wheel', e => { e.preventDefault(); orbitState.radius = clamp3D(orbitState.radius + e.deltaY * 0.0035, 3.2, 11); }, { passive: false });
     canvas.addEventListener('click', e => { if (!didDrag3D) on3DPick(e.clientX, e.clientY); });
     window.addEventListener('resize', onResize3D);
