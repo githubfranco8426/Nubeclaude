@@ -10,6 +10,10 @@
         h1 { font-size: 20px; color: #58a6ff; margin-top: 0; }
         p { font-size: 13px; color: #8b949e; }
         .status { color: #56d364; font-weight: bold; }
+        #model-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+        #model-picker button { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; font-size: 12px; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+        #model-picker button:hover { border-color: #58a6ff; }
+        #model-picker button.activo { background: #1f6feb; border-color: #58a6ff; color: #fff; }
     </style>
     <!-- Enlace oficial al Viewer API de Sketchfab (debe apuntar al script JS, no a sketchfab.com) -->
     <script type="text/javascript" src="https://static.sketchfab.com/api/sketchfab-viewer-1.12.1.js"></script>
@@ -22,37 +26,54 @@
     <div id="panel-control">
         <h1>Control Cardíaco por Claude</h1>
         <p>Estado de la API: <span id="api-status" class="status">Cargando...</span></p>
+        <p>Modelo:</p>
+        <div id="model-picker"></div>
         <p>Claude enviará comandos JSON aquí para manipular de forma inteligente las capas de este corazón.</p>
     </div>
 
     <script>
-        // UID del modelo 3D
-        const modelUid = '54fa880728d14c11afff78be8721620a';
+        const MODELOS = [
+            { uid: '54fa880728d14c11afff78be8721620a', nombre: 'Corazón anatómico' },
+            { uid: '0acf946a98ca40908f40cc3c402f1bc7', nombre: 'Corazón seccionado' }
+        ];
         const iframe = document.getElementById('sketchfab-iframe');
-
-        const client = new Sketchfab('1.12.1', iframe);
         let apiControl = null;
 
-        // Inicializar el visor
-        client.init(modelUid, {
-            success: function onSuccess(api) {
-                api.start();
-                api.addEventListener('viewerready', function() {
-                    apiControl = api;
-                    document.getElementById('api-status').innerText = "¡Conectado y Listo!";
-                    console.log("Sketchfab API cargada correctamente.");
+        function cargarModelo(uid) {
+            apiControl = null;
+            document.getElementById('api-status').innerText = "Cargando...";
+            document.querySelectorAll('#model-picker button').forEach(b => {
+                b.className = b.dataset.uid === uid ? 'activo' : '';
+            });
 
-                    api.getMaterialList(function(err, materials) {
-                        console.log("Materiales del corazón detectados:", materials);
+            new Sketchfab('1.12.1', iframe).init(uid, {
+                success: function onSuccess(api) {
+                    api.start();
+                    api.addEventListener('viewerready', function() {
+                        apiControl = api;
+                        document.getElementById('api-status').innerText = "¡Conectado y Listo!";
+                        api.getMaterialList(function(err, materials) {
+                            console.log("Materiales del corazón detectados:", materials);
+                        });
                     });
-                });
-            },
-            error: function onError() {
-                document.getElementById('api-status').innerText = "Error de conexión";
-            },
-            autostart: 1,
-            preload: 1
+                },
+                error: function onError() {
+                    document.getElementById('api-status').innerText = "Error de conexión";
+                },
+                autostart: 1,
+                preload: 1
+            });
+        }
+
+        const picker = document.getElementById('model-picker');
+        MODELOS.forEach(m => {
+            const b = document.createElement('button');
+            b.textContent = m.nombre;
+            b.dataset.uid = m.uid;
+            b.addEventListener('click', () => cargarModelo(m.uid));
+            picker.appendChild(b);
         });
+        cargarModelo(MODELOS[0].uid);
 
         // Función para ejecutar las acciones interactivas
         function ejecutarAccionClaude(jsonComando) {
