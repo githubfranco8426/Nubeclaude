@@ -189,6 +189,17 @@
   .lb-close{ position:absolute; top:0.9rem; right:1rem; width:2.5rem; height:2.5rem; border-radius:999px; border:1px solid var(--border); background:rgba(30,41,59,0.9); color:#f1f5f9; font-size:1rem; }
   .lb-close:hover{ background:#334155; }
   @media (prefers-reduced-motion: reduce){ *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; } }
+  /* La ruta se muestra en dos columnas: el avance queda fijo al costado
+     mientras se recorren los pasos. En pantallas angostas vuelve a apilarse,
+     porque un banner fijo se comeria media pantalla. */
+  .ruta-layout{ display:grid; grid-template-columns:1fr; gap:1.25rem; align-items:start; }
+  .ruta-lateral{ min-width:0; }
+  @media (min-width:1024px){
+    .ruta-layout{ grid-template-columns:265px 1fr; gap:1.75rem; }
+    .ruta-lateral{ position:sticky; top:5.25rem; }
+    .ruta-progreso-fila{ flex-direction:column; align-items:flex-start; gap:.6rem; }
+    .ruta-reset{ align-self:stretch; text-align:center; }
+  }
   .ruta-progreso-fila{ display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.7rem; }
   .ruta-reset{ background:transparent; border:1px solid var(--border); color:#94a3b8; font-size:.72rem; padding:.35rem .7rem; border-radius:.4rem; }
   .ruta-reset:hover{ border-color:var(--teal); color:#2dd4bf; }
@@ -285,18 +296,21 @@
   <h2 class="text-xl sm:text-2xl font-bold mb-2 flex items-center gap-2">🧭 Ruta de Estudio</h2>
   <p class="text-sm text-slate-400 mb-4">Diez pasos en el mismo orden en que la clase construye el tema: de la forma general del corazón a la circulación completa. Cada paso te dice qué leer, dónde verlo en esta guía y con qué pregunta comprobar que lo entendiste. Unas 2 h 30 en total.</p>
 
-  <div class="ruta-progreso card rounded-xl p-4 mb-5">
-    <div class="ruta-progreso-fila">
-      <p id="rutaEstado" class="text-sm font-semibold text-slate-100">0 de 10 pasos estudiados</p>
-      <button id="rutaReset" type="button" class="ruta-reset">Reiniciar</button>
-    </div>
-    <div class="ruta-barra" role="progressbar" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" aria-label="Progreso de la ruta de estudio">
-      <span id="rutaBarra"></span>
-    </div>
-    <p class="text-xs text-slate-400" style="margin-top:.55rem">Tu avance se guarda solo en este navegador.</p>
-  </div>
+  <div class="ruta-layout">
+    <aside class="ruta-lateral">
+      <div class="ruta-progreso card rounded-xl p-4">
+        <div class="ruta-progreso-fila">
+          <p id="rutaEstado" class="text-sm font-semibold text-slate-100">0 de 10 pasos estudiados</p>
+          <button id="rutaReset" type="button" class="ruta-reset">Reiniciar</button>
+        </div>
+        <div class="ruta-barra" role="progressbar" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" aria-label="Progreso de la ruta de estudio">
+          <span id="rutaBarra"></span>
+        </div>
+        <p class="text-xs text-slate-400" style="margin-top:.55rem">Tu avance se guarda solo en este navegador.</p>
+      </div>
+    </aside>
 
-  <ol class="ruta-lista">
+    <ol class="ruta-lista">
       <li class="ruta-paso" data-paso="1">
         <div class="ruta-marca">
           <span class="ruta-n">1</span>
@@ -497,7 +511,8 @@
           </label>
         </div>
       </li>
-  </ol>
+    </ol>
+  </div>
 </section>
 
 <!-- MODELO ANATÓMICO INTERACTIVO -->
