@@ -169,6 +169,52 @@
   .lb-close{ position:absolute; top:0.9rem; right:1rem; width:2.5rem; height:2.5rem; border-radius:999px; border:1px solid var(--border); background:rgba(30,41,59,0.9); color:#f1f5f9; font-size:1rem; }
   .lb-close:hover{ background:#334155; }
   @media (prefers-reduced-motion: reduce){ *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; } }
+  .ruta-progreso-fila{ display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.7rem; }
+  .ruta-reset{ background:transparent; border:1px solid var(--border); color:#94a3b8; font-size:.72rem; padding:.35rem .7rem; border-radius:.4rem; }
+  .ruta-reset:hover{ border-color:var(--teal); color:#2dd4bf; }
+  .ruta-barra{ height:7px; background:#0f172a; border-radius:999px; overflow:hidden; border:1px solid var(--border); }
+  .ruta-barra span{ display:block; height:100%; width:0%; background:linear-gradient(90deg,#0d9488,#2dd4bf); transition:width .25s ease; }
+
+  .ruta-lista{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; }
+  .ruta-paso{ display:grid; grid-template-columns:2.2rem 1fr; gap:1rem; }
+  .ruta-marca{ display:flex; flex-direction:column; align-items:center; gap:.4rem; }
+  .ruta-n{ flex:0 0 auto; width:2.2rem; height:2.2rem; border-radius:999px; background:#1e293b; border:1px solid var(--border); color:#94a3b8; font-size:.85rem; font-weight:700; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+  .ruta-linea{ flex:1 1 auto; width:2px; background:var(--border); border-radius:2px; }
+  .ruta-paso:last-child .ruta-linea{ background:transparent; }
+  .ruta-paso.hecho .ruta-n{ background:#0f766e; border-color:#14b8a6; color:#fff; }
+  .ruta-paso.hecho .ruta-linea{ background:rgba(20,184,166,.45); }
+  .ruta-cuerpo{ background:var(--card); border:1px solid var(--border); border-radius:.75rem; padding:1.1rem 1.15rem 1rem; margin-bottom:1.1rem; display:flex; flex-direction:column; gap:.7rem; }
+  .ruta-paso.hecho .ruta-cuerpo{ border-color:rgba(20,184,166,.4); }
+  .ruta-cabecera{ display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+  .ruta-cabecera h3{ font-size:1rem; font-weight:700; color:#f1f5f9; }
+  .ruta-min{ font-size:.7rem; color:#64748b; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .ruta-que{ font-size:.83rem; color:#cbd5e1; line-height:1.65; }
+  .ruta-que strong, .ruta-fija strong{ color:#f1f5f9; font-weight:600; }
+  .ruta-fija{ font-size:.8rem; color:#cbd5e1; line-height:1.6; background:rgba(245,158,11,.07); border-left:2px solid rgba(245,158,11,.5); border-radius:.35rem; padding:.6rem .75rem; }
+  .ruta-control{ font-size:.8rem; color:#cbd5e1; line-height:1.6; background:rgba(20,184,166,.07); border-left:2px solid rgba(20,184,166,.5); border-radius:.35rem; padding:.6rem .75rem; }
+  .ruta-etq{ display:block; font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; font-weight:700; color:#fbbf24; margin-bottom:.25rem; }
+  .ruta-etq-check{ color:#2dd4bf; }
+  .ruta-donde{ display:flex; flex-wrap:wrap; gap:.45rem; }
+  .ruta-link{ font-size:.72rem; font-weight:600; color:#93c5fd; background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.3); border-radius:999px; padding:.3rem .7rem; }
+  .ruta-link:hover{ background:rgba(59,130,246,.2); color:#dbeafe; }
+  .ruta-link::before{ content:"→ "; }
+  .ruta-hecho{ display:flex; align-items:center; gap:.5rem; font-size:.76rem; color:#94a3b8; cursor:pointer; margin-top:.1rem; }
+  .ruta-hecho input{ width:1rem; height:1rem; accent-color:#14b8a6; cursor:pointer; }
+  .ruta-paso.hecho .ruta-hecho{ color:#2dd4bf; }
+  @media (max-width:520px){ .ruta-paso{ grid-template-columns:1.8rem 1fr; gap:.7rem; } .ruta-n{ width:1.8rem; height:1.8rem; font-size:.78rem; } }
+
+  .sf-wrap{ display:flex; flex-direction:column; gap:0.7rem; }
+  .sf-picker{ display:flex; flex-wrap:wrap; gap:0.5rem; }
+  .sf-btn{ background:#1e293b; border:1px solid #334155; color:#cbd5e1; font-size:0.76rem; font-weight:600; padding:0.45rem 0.8rem; border-radius:0.5rem; }
+  .sf-btn.active{ background:#0f766e; border-color:#14b8a6; color:#fff; }
+  .sf-frame{ position:relative; width:100%; height:min(62vh,520px); border-radius:0.75rem; overflow:hidden; background:#0b1220; border:1px solid var(--border); }
+  .sf-frame iframe{ width:100%; height:100%; border:0; display:block; }
+  .sf-fallback{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; gap:0.6rem; padding:1.5rem; background:#0b1220; text-align:center; }
+  .sf-fallback[hidden]{ display:none; }
+  .sf-fallback p{ font-size:0.82rem; color:#94a3b8; line-height:1.6; max-width:56ch; margin:0 auto; }
+  .sf-fallback-title{ font-size:0.95rem !important; font-weight:700; color:#f1f5f9 !important; }
+  .sf-fallback a{ color:#2dd4bf; text-decoration:underline; }
+  .sf-credit{ font-size:0.7rem; color:#64748b; }
   .heart3d-hint{ position:absolute; left:0.75rem; bottom:0.6rem; font-size:10px; color:#94a3b8; background:rgba(15,23,42,0.55); padding:0.3rem 0.6rem; border-radius:0.4rem; pointer-events:none; }
 </style>
 </head>
@@ -183,6 +229,7 @@
     </div>
     <button id="menuBtn" class="sm:hidden text-slate-200 tap-btn px-3">☰</button>
     <nav id="navMenu" class="hidden sm:flex gap-4 text-xs sm:text-sm text-slate-300">
+      <a href="#ruta" class="nav-link">Ruta</a>
       <a href="#objetivos" class="nav-link">Objetivos</a>
       <a href="#modelo" class="nav-link">Modelo 3D</a>
       <a href="#anatomia" class="nav-link">Anatomía</a>
@@ -195,6 +242,7 @@
     </nav>
   </div>
   <div id="navMenuMobile" class="hidden sm:hidden flex-col bg-slate-900 border-t border-slate-700 px-4 py-2 gap-1 text-sm text-slate-300">
+    <a href="#ruta" class="nav-link py-2 block">Ruta de estudio</a>
     <a href="#objetivos" class="nav-link py-2 block">Objetivos</a>
     <a href="#modelo" class="nav-link py-2 block">Modelo anatómico interactivo</a>
     <a href="#anatomia" class="nav-link py-2 block">Fundamentos anatómicos</a>
@@ -221,6 +269,226 @@
   </div>
 </section>
 
+<!-- RUTA DE ESTUDIO -->
+<section id="ruta" class="max-w-6xl mx-auto px-4 py-6 section-title">
+  <h2 class="text-xl sm:text-2xl font-bold mb-2 flex items-center gap-2">🧭 Ruta de Estudio</h2>
+  <p class="text-sm text-slate-400 mb-4">Diez pasos en el mismo orden en que la clase construye el tema: de la forma general del corazón a la circulación completa. Cada paso te dice qué leer, dónde verlo en esta guía y con qué pregunta comprobar que lo entendiste. Unas 2 h 30 en total.</p>
+
+  <div class="ruta-progreso card rounded-xl p-4 mb-5">
+    <div class="ruta-progreso-fila">
+      <p id="rutaEstado" class="text-sm font-semibold text-slate-100">0 de 10 pasos estudiados</p>
+      <button id="rutaReset" type="button" class="ruta-reset">Reiniciar</button>
+    </div>
+    <div class="ruta-barra" role="progressbar" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" aria-label="Progreso de la ruta de estudio">
+      <span id="rutaBarra"></span>
+    </div>
+    <p class="text-xs text-slate-400" style="margin-top:.55rem">Tu avance se guarda solo en este navegador.</p>
+  </div>
+
+  <ol class="ruta-lista">
+      <li class="ruta-paso" data-paso="1">
+        <div class="ruta-marca">
+          <span class="ruta-n">1</span>
+          <span class="ruta-linea" aria-hidden="true"></span>
+        </div>
+        <div class="ruta-cuerpo">
+          <div class="ruta-cabecera">
+            <h3>Generalidades: qué es y cómo está construido</h3>
+            <span class="ruta-min">10 min</span>
+          </div>
+          <p class="ruta-que">La <strong>angiología</strong> tiene por objeto el estudio del sistema que asegura la circulación de la sangre, del quilo y de la linfa. El sistema cardiovascular comprende el corazón y los conductos (arterias, venas y capilares). El corazón es un <strong>músculo hueco</strong> que circunscribe cavidades, con un periodo de relajación (diástole) y uno de contracción (sístole).</p>
+          <p class="ruta-fija"><span class="ruta-etq">Fija esto</span>Las tres capas de dentro afuera — <strong>endocardio, miocardio, epicardio</strong> — rodeadas por el pericardio. Forma de <strong>pirámide triangular invertida</strong>: base atrás, arriba y algo a la derecha; vértice adelante y a la izquierda. Pesa 200–250 g en el adulto y unos 25 g al nacer.</p>
+          <div class="ruta-donde"><a class="ruta-link" href="#anatomia">Fundamentos Anatómicos</a></div>
+          <p class="ruta-control"><span class="ruta-etq ruta-etq-check">Pregunta de control</span>Si el vértice apunta adelante y a la izquierda, ¿qué cavidad esperas encontrar en el choque de la punta?</p>
+          <label class="ruta-hecho">
+            <input type="checkbox" data-check="1">
+            <span>Marcar paso 1 como estudiado</span>
+          </label>
+        </div>
+      </li>
+      <li class="ruta-paso" data-paso="2">
+        <div class="ruta-marca">
+          <span class="ruta-n">2</span>
+          <span class="ruta-linea" aria-hidden="true"></span>
+        </div>
+        <div class="ruta-cuerpo">
+          <div class="ruta-cabecera">
+            <h3>Configuración externa: las cinco caras</h3>
+            <span class="ruta-min">15 min</span>
+          </div>
+          <p class="ruta-que">Recorre las caras <strong>anterior, posterior, inferior</strong> y <strong>pulmonares izquierda y derecha</strong>. En cada lámina localiza primero los grandes vasos (cavas, aorta, tronco pulmonar, venas pulmonares) y solo después las cavidades.</p>
+          <p class="ruta-fija"><span class="ruta-etq">Fija esto</span>Los <strong>surcos</strong> son el mapa de la superficie: el interventricular anterior y posterior marcan por fuera dónde está el tabique por dentro, y el surco coronario separa aurículas de ventrículos.</p>
+          <div class="ruta-donde"><a class="ruta-link" href="#atlas">Atlas · Configuración externa</a><a class="ruta-link" href="#modelo">Modelo 3D — rótalo mientras miras las láminas</a></div>
+          <p class="ruta-control"><span class="ruta-etq ruta-etq-check">Pregunta de control</span>¿Qué cavidad predomina en la cara anterior y cuál en la cara posterior?</p>
+          <label class="ruta-hecho">
+            <input type="checkbox" data-check="2">
+            <span>Marcar paso 2 como estudiado</span>
+          </label>
+        </div>
+      </li>
+      <li class="ruta-paso" data-paso="3">
+        <div class="ruta-marca">
+          <span class="ruta-n">3</span>
+          <span class="ruta-linea" aria-hidden="true"></span>
+        </div>
+        <div class="ruta-cuerpo">
+          <div class="ruta-cabecera">
+            <h3>Tabiques: cómo queda dividido el corazón</h3>
+            <span class="ruta-min">15 min</span>
+          </div>
+          <p class="ruta-que">El corazón se divide en dos mitades por el tabique cardíaco; cada lado tiene aurícula y ventrículo comunicados por un orificio auriculoventricular provisto de válvula. Se estudian tres tabiques: <strong>interauricular</strong>, <strong>interventricular</strong> y <strong>auriculoventricular</strong>.</p>
+          <p class="ruta-fija"><span class="ruta-etq">Fija esto</span>El punto clave de la clase: <strong>normalmente no hay comunicación entre aurículas y ventrículos</strong> salvo por ese orificio valvulado. Y la <strong>porción membranosa</strong> del tabique auriculoventricular es por donde corre el fascículo auriculoventricular.</p>
+          <div class="ruta-donde"><a class="ruta-link" href="#atlas">Atlas · Tabiques y cavidades</a><a class="ruta-link" href="#anatomia">Configuración interna: tabiques</a></div>
+          <p class="ruta-control"><span class="ruta-etq ruta-etq-check">Pregunta de control</span>¿Qué estructura del sistema de conducción atraviesa la porción membranosa, y por qué eso importa en un bloqueo?</p>
+          <label class="ruta-hecho">
+            <input type="checkbox" data-check="3">
+            <span>Marcar paso 3 como estudiado</span>
+          </label>
+        </div>
+      </li>
+      <li class="ruta-paso" data-paso="4">
+        <div class="ruta-marca">
+          <span class="ruta-n">4</span>
+          <span class="ruta-linea" aria-hidden="true"></span>
+        </div>
+        <div class="ruta-cuerpo">
+          <div class="ruta-cabecera">
+            <h3>Corazón derecho</h3>
+            <span class="ruta-min">15 min</span>
+          </div>
+          <p class="ruta-que"><strong>Aurícula derecha:</strong> nodo sinoauricular, músculos pectíneos, orificios de las venas cavas superior e inferior, fosa oval, orificio del seno coronario y válvula tricúspide.<br><strong>Ventrículo derecho:</strong> tracto de entrada y de salida, cresta supraventricular, trabécula septomarginal y banda moderadora.</p>
+          <p class="ruta-fija"><span class="ruta-etq">Fija esto</span>La <strong>pared del VD mide 4–6 mm</strong>. No es un dato suelto: explica por qué tolera mal una sobrecarga de presión súbita.</p>
+          <div class="ruta-donde"><a class="ruta-link" href="#atlas">Atlas · Aurícula y ventrículo derechos</a><a class="ruta-link" href="#modelo">Esquema 2D — toca AD y VD para su ficha</a></div>
+          <p class="ruta-control"><span class="ruta-etq ruta-etq-check">Pregunta de control</span>¿Por qué la pared del ventrículo derecho es tan delgada comparada con la del izquierdo?</p>
+          <label class="ruta-hecho">
+            <input type="checkbox" data-check="4">
+            <span>Marcar paso 4 como estudiado</span>
+          </label>
+        </div>
+      </li>
+      <li class="ruta-paso" data-paso="5">
+        <div class="ruta-marca">
+          <span class="ruta-n">5</span>
+          <span class="ruta-linea" aria-hidden="true"></span>
+        </div>
+        <div class="ruta-cuerpo">
+          <div class="ruta-cabecera">
+            <h3>Corazón izquierdo</h3>
+            <span class="ruta-min">12 min</span>
+          </div>
+          <p class="ruta-que">La <strong>aurícula izquierda</strong> recibe las cuatro venas pulmonares. El <strong>ventrículo izquierdo</strong> presenta solo dos músculos papilares (anterior y posterior), el conducto de salida de la aorta y los senos de Valsalva.</p>
+          <p class="ruta-fija"><span class="ruta-etq">Fija esto</span><strong>Mayor espesor del miocardio ventricular</strong> izquierdo. Compáralo lado a lado con el paso anterior: misma cavidad, distinta poscarga, distinto grosor.</p>
+          <div class="ruta-donde"><a class="ruta-link" href="#atlas">Atlas · Corazón izquierdo</a><a class="ruta-link" href="#modelo">Esquema 2D — toca AI y VI</a></div>
+          <p class="ruta-control"><span class="ruta-etq ruta-etq-check">Pregunta de control</span>¿Cuántos músculos papilares tiene el VI y qué valva sostiene cada uno?</p>
+          <label class="ruta-hecho">
+            <input type="checkbox" data-check="5">
+            <span>Marcar paso 5 como estudiado</span>
+          </label>
+        </div>
+      </li>
+      <li class="ruta-paso" data-paso="6">
+        <div class="ruta-marca">
+          <span class="ruta-n">6</span>
+          <span class="ruta-linea" aria-hidden="true"></span>
+        </div>
+        <div class="ruta-cuerpo">
+          <div class="ruta-cabecera">
+            <h3>Aparato valvular</h3>
+            <span class="ruta-min">18 min</span>
+          </div>
+          <p class="ruta-que">Anexado a los orificios auriculoventriculares y a los de salida ventricular. Lo forman <strong>anillo fibroso, valvas, cuerdas tendinosas y músculos papilares</strong>. Las cuerdas se dividen en primer, segundo y tercer orden y se insertan en los papilares.</p>
+          <p class="ruta-fija"><span class="ruta-etq">Fija esto</span>La tabla de las cuatro válvulas: tricúspide (3 valvas, orificio AV derecho), mitral (2, orificio AV izquierdo), pulmonar y aórtica (3 semilunares cada una).</p>
+          <div class="ruta-donde"><a class="ruta-link" href="#atlas">Atlas · Aparato valvular</a><a class="ruta-link" href="#anatomia">Tabla de válvulas</a></div>
+          <p class="ruta-control"><span class="ruta-etq ruta-etq-check">Pregunta de control</span>Explica con tus palabras la diferencia entre <em>válvula</em> y <em>valva</em>, y qué son las comisuras.</p>
+          <label class="ruta-hecho">
+            <input type="checkbox" data-check="6">
+            <span>Marcar paso 6 como estudiado</span>
+          </label>
+        </div>
+      </li>
+      <li class="ruta-paso" data-paso="7">
+        <div class="ruta-marca">
+          <span class="ruta-n">7</span>
+          <span class="ruta-linea" aria-hidden="true"></span>
+        </div>
+        <div class="ruta-cuerpo">
+          <div class="ruta-cabecera">
+            <h3>Sistema de conducción</h3>
+            <span class="ruta-min">20 min</span>
+          </div>
+          <p class="ruta-que">El miocardio posee <strong>automatismo</strong>: un corazón aislado de toda conexión nerviosa extrínseca continúa latiendo. El sistema comprende el <strong>nodo sinoauricular</strong> (de Keith y Flack) y el <strong>conjunto auriculoventricular</strong>: nodo AV (de Aschoff-Tawara) → haz de His → red de Purkinje.</p>
+          <p class="ruta-fija"><span class="ruta-etq">Fija esto</span>El nodo SA está adelante y a la derecha del orificio de la vena cava superior. Ahí se originan las primeras contracciones del corazón embrionario.</p>
+          <div class="ruta-donde"><a class="ruta-link" href="#modelo">Modelo 3D → modo «Sist. de Conducción»</a><a class="ruta-link" href="#ecg">Taller: del sistema de conducción al ECG</a></div>
+          <p class="ruta-control"><span class="ruta-etq ruta-etq-check">Pregunta de control</span>Recita la secuencia completa del impulso y di qué parte del trazado del ECG genera cada tramo.</p>
+          <label class="ruta-hecho">
+            <input type="checkbox" data-check="7">
+            <span>Marcar paso 7 como estudiado</span>
+          </label>
+        </div>
+      </li>
+      <li class="ruta-paso" data-paso="8">
+        <div class="ruta-marca">
+          <span class="ruta-n">8</span>
+          <span class="ruta-linea" aria-hidden="true"></span>
+        </div>
+        <div class="ruta-cuerpo">
+          <div class="ruta-cabecera">
+            <h3>Circulación mayor y menor</h3>
+            <span class="ruta-min">15 min</span>
+          </div>
+          <p class="ruta-que"><strong>William Harvey (1628)</strong> describió que la sangre circula a partir del ventrículo izquierdo.<br><strong>Sistémica:</strong> ventrículo izquierdo → aorta y sus ramas → capilares → venas → aurícula derecha.<br><strong>Pulmonar:</strong> ventrículo derecho → arteria pulmonar → capilares pulmonares → venas pulmonares → aurícula izquierda.</p>
+          <p class="ruta-fija"><span class="ruta-etq">Fija esto</span>Usa los modos del modelo para ver los dos circuitos por separado antes de intentar recitarlos. Es el punto donde más se mezclan los recorridos.</p>
+          <div class="ruta-donde"><a class="ruta-link" href="#modelo">Modelo → modos «Circulación Mayor» y «Menor»</a><a class="ruta-link" href="#atlas">Atlas · Circulación</a></div>
+          <p class="ruta-control"><span class="ruta-etq ruta-etq-check">Pregunta de control</span>¿Cuál es la única arteria del cuerpo que transporta sangre poco oxigenada, y cuáles las únicas venas que llevan sangre oxigenada?</p>
+          <label class="ruta-hecho">
+            <input type="checkbox" data-check="8">
+            <span>Marcar paso 8 como estudiado</span>
+          </label>
+        </div>
+      </li>
+      <li class="ruta-paso" data-paso="9">
+        <div class="ruta-marca">
+          <span class="ruta-n">9</span>
+          <span class="ruta-linea" aria-hidden="true"></span>
+        </div>
+        <div class="ruta-cuerpo">
+          <div class="ruta-cabecera">
+            <h3>Circulación linfática</h3>
+            <span class="ruta-min">10 min</span>
+          </div>
+          <p class="ruta-que">El sistema linfático drena el exceso de líquido intersticial y lo transporta hacia la circulación venosa. Lo forman timo, bazo, ganglios, médula ósea, amígdalas, MALT y vasos linfáticos. Cumple <strong>tres funciones</strong>: transporte de linfa, transporte de grasa absorbida en el intestino delgado y defensa por los linfocitos.</p>
+          <p class="ruta-fija"><span class="ruta-etq">Fija esto</span>Los capilares linfáticos confluyen en conductos con tres túnicas y válvulas, y desembocan en dos grandes conductos: el <strong>torácico</strong> y el <strong>linfático derecho</strong>, que drenan en las venas subclavias.</p>
+          <div class="ruta-donde"><a class="ruta-link" href="#atlas">Atlas · Circulación linfática</a><a class="ruta-link" href="#perlas">Perlas y Red Flags</a></div>
+          <p class="ruta-control"><span class="ruta-etq ruta-etq-check">Pregunta de control</span>¿Qué territorio drena exactamente el conducto linfático derecho?</p>
+          <label class="ruta-hecho">
+            <input type="checkbox" data-check="9">
+            <span>Marcar paso 9 como estudiado</span>
+          </label>
+        </div>
+      </li>
+      <li class="ruta-paso" data-paso="10">
+        <div class="ruta-marca">
+          <span class="ruta-n">10</span>
+          <span class="ruta-linea" aria-hidden="true"></span>
+        </div>
+        <div class="ruta-cuerpo">
+          <div class="ruta-cabecera">
+            <h3>Consolidación y autoevaluación</h3>
+            <span class="ruta-min">20 min</span>
+          </div>
+          <p class="ruta-que">No cierres el tema leyendo otra vez. Cierra <strong>recuperando</strong>: primero las flashcards a ciegas, después el modo evaluación sobre el modelo (que te obliga a ubicar la estructura, no solo a nombrarla) y por último el quiz de razonamiento.</p>
+          <p class="ruta-fija"><span class="ruta-etq">Fija esto</span>Si fallas una estructura en el modo evaluación, vuelve al paso correspondiente antes de seguir. Lo que se falla ubicando casi nunca se arregla releyendo.</p>
+          <div class="ruta-donde"><a class="ruta-link" href="#flashcards">Flashcards</a><a class="ruta-link" href="#modelo">Modelo → «Modo Evaluación»</a><a class="ruta-link" href="#quiz">Quiz de consolidación</a></div>
+          <p class="ruta-control"><span class="ruta-etq ruta-etq-check">Pregunta de control</span>Objetivo: 4/5 en el modo evaluación y explicar cada respuesta del quiz sin mirar.</p>
+          <label class="ruta-hecho">
+            <input type="checkbox" data-check="10">
+            <span>Marcar paso 10 como estudiado</span>
+          </label>
+        </div>
+      </li>
+  </ol>
+</section>
+
 <!-- MODELO ANATÓMICO INTERACTIVO -->
 <section id="modelo" class="max-w-6xl mx-auto px-4 py-6 section-title">
   <h2 class="text-xl sm:text-2xl font-bold mb-2 flex items-center gap-2">🫀 Modelo Anatómico Interactivo</h2>
@@ -232,10 +500,11 @@
   <div class="flex flex-wrap gap-2 mb-2">
     <button data-view="2d" class="view-btn tap-btn active">📐 Esquema 2D</button>
     <button data-view="3d" class="view-btn tap-btn">🧊 Modelo 3D</button>
+    <button data-view="sf" class="view-btn tap-btn">🫀 Sketchfab</button>
   </div>
 
   <!-- Filtros / modos -->
-  <div class="flex flex-wrap gap-2 mb-4">
+  <div id="modeRow" class="flex flex-wrap gap-2 mb-4">
     <button data-mode="normal" class="mode-btn tap-btn">Vista General</button>
     <button data-mode="mayor" class="mode-btn tap-btn">🔴 Circulación Mayor</button>
     <button data-mode="menor" class="mode-btn tap-btn">🔵 Circulación Menor</button>
@@ -249,6 +518,22 @@
       <div id="heart3dWrap" class="heart3d-wrap hidden">
         <canvas id="heart3dCanvas"></canvas>
         <p class="heart3d-hint">Arrastra para rotar · rueda/pellizco para zoom · toca una estructura</p>
+      </div>
+
+      <div id="sfWrap" class="sf-wrap hidden">
+        <div class="sf-picker">
+          <button type="button" data-sf="54fa880728d14c11afff78be8721620a" class="sf-btn active">Corazón anatómico</button>
+          <button type="button" data-sf="0acf946a98ca40908f40cc3c402f1bc7" class="sf-btn">Corazón seccionado</button>
+        </div>
+        <div class="sf-frame">
+          <iframe id="sfIframe" title="Modelo cardíaco en Sketchfab" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>
+          <div id="sfFallback" class="sf-fallback" hidden>
+            <p class="sf-fallback-title">El visor de Sketchfab no se pudo cargar aquí</p>
+            <p>Esta página se publica en un entorno que puede bloquear contenido de otros dominios. El modelo sigue disponible en su ficha original, y el <strong>Modelo 3D</strong> de esta misma guía funciona sin conexión externa.</p>
+            <p><a id="sfLink" href="#" target="_blank" rel="noopener noreferrer">Abrir el modelo en sketchfab.com ↗</a></p>
+          </div>
+        </div>
+        <p class="sf-credit">Modelos alojados en Sketchfab; los derechos son de sus autores. Consulta la licencia en la ficha de cada modelo.</p>
       </div>
       <svg id="heartSvg" viewBox="0 0 520 480" class="w-full h-auto select-none">
         <!-- Grandes vasos -->
@@ -1323,17 +1608,61 @@
   }
 
   let activeView = '2d';
+  // ===== VISOR SKETCHFAB (iframe de embed, sin script externo) =====
+  // Si el entorno bloquea contenido de otros dominios, el iframe nunca dispara
+  // load: en ese caso mostramos el respaldo en vez de dejar un recuadro vacío.
+  const sfIframe = document.getElementById('sfIframe');
+  const sfFallback = document.getElementById('sfFallback');
+  const sfLink = document.getElementById('sfLink');
+  let sfLoaded = false, sfTimer = null, sfCurrentUid = null, sfBlocked = false;
+
+  // Un iframe bloqueado igual dispara "load" con su página de error, así que
+  // ese evento no sirve para detectarlo. La señal fiable es la violación de CSP.
+  document.addEventListener('securitypolicyviolation', e => {
+    if ((e.blockedURI || '').indexOf('sketchfab') !== -1) {
+      sfBlocked = true;
+      sfFallback.hidden = false;
+    }
+  });
+
+  sfIframe.addEventListener('load', () => {
+    if (!sfIframe.src || sfBlocked) return;
+    sfLoaded = true;
+    clearTimeout(sfTimer);
+  });
+
+  function loadSketchfab(uid) {
+    if (sfCurrentUid === uid) return;
+    sfCurrentUid = uid;
+    sfLoaded = false;
+    sfFallback.hidden = sfBlocked ? false : true;
+    sfLink.href = `https://sketchfab.com/models/${uid}`;
+    document.querySelectorAll('.sf-btn').forEach(b => b.classList.toggle('active', b.dataset.sf === uid));
+    sfIframe.src = `https://sketchfab.com/models/${uid}/embed?autostart=1&ui_theme=dark`;
+    clearTimeout(sfTimer);
+    sfTimer = setTimeout(() => { if (!sfLoaded) sfFallback.hidden = false; }, 8000);
+  }
+  document.querySelectorAll('.sf-btn').forEach(b => b.addEventListener('click', () => loadSketchfab(b.dataset.sf)));
+
   function setView(view) {
     activeView = view;
     document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
     const wrap3d = document.getElementById('heart3dWrap');
+    const wrapSf = document.getElementById('sfWrap');
+    heartSvg.classList.add('hidden');
+    wrap3d.classList.add('hidden');
+    wrapSf.classList.add('hidden');
+    // Los filtros de circulacion/conduccion solo aplican a los visores propios
+    document.getElementById('modeRow').style.display = view === 'sf' ? 'none' : '';
+
     if (view === '3d') {
-      heartSvg.classList.add('hidden');
       wrap3d.classList.remove('hidden');
       if (!heart3DReady) init3D();
       else { onResize3D(); heart3DApplyAll(); }
+    } else if (view === 'sf') {
+      wrapSf.classList.remove('hidden');
+      loadSketchfab(sfCurrentUid || '54fa880728d14c11afff78be8721620a');
     } else {
-      wrap3d.classList.add('hidden');
       heartSvg.classList.remove('hidden');
     }
   }
@@ -1638,6 +1967,43 @@
 
   renderQuiz();
   updateScore();
+
+  // Ruta de estudio: progreso por navegador
+  const RUTA_KEY = 'cardio-ruta-v1';
+  const rutaChecks = Array.from(document.querySelectorAll('[data-check]'));
+  const rutaBarra = document.getElementById('rutaBarra');
+  const rutaEstado = document.getElementById('rutaEstado');
+
+  function rutaLeer() {
+    try {
+      const raw = localStorage.getItem(RUTA_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+  function rutaGuardar(lista) {
+    try { localStorage.setItem(RUTA_KEY, JSON.stringify(lista)); } catch (e) { /* sin persistencia */ }
+  }
+  function rutaPintar() {
+    const hechos = rutaChecks.filter(c => c.checked).length;
+    rutaChecks.forEach(c => c.closest('.ruta-paso').classList.toggle('hecho', c.checked));
+    rutaBarra.style.width = (hechos / rutaChecks.length * 100) + '%';
+    rutaBarra.parentElement.setAttribute('aria-valuenow', hechos);
+    rutaEstado.textContent = hechos === rutaChecks.length
+      ? '¡Ruta completa! 10 de 10 pasos estudiados'
+      : `${hechos} de ${rutaChecks.length} pasos estudiados`;
+  }
+  const rutaHechos = rutaLeer();
+  rutaChecks.forEach(c => { c.checked = rutaHechos.indexOf(c.dataset.check) !== -1; });
+  rutaChecks.forEach(c => c.addEventListener('change', () => {
+    rutaGuardar(rutaChecks.filter(x => x.checked).map(x => x.dataset.check));
+    rutaPintar();
+  }));
+  document.getElementById('rutaReset').addEventListener('click', () => {
+    rutaChecks.forEach(c => { c.checked = false; });
+    rutaGuardar([]);
+    rutaPintar();
+  });
+  rutaPintar();
 
   // Lightbox del atlas
   const lightbox = document.getElementById('lightbox');
