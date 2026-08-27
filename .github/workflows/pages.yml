@@ -1,0 +1,47 @@
+name: Publicar la guia en GitHub Pages
+
+on:
+  push:
+    branches: [claude/sketchfab-cardiac-lab-y357hr]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # enablement:true activa Pages por API, sin pasar por Settings
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      # Se publica una lista explicita de archivos: nada mas del repo
+      # puede acabar en el sitio por accidente.
+      - name: Reunir los archivos del sitio
+        run: |
+          mkdir -p _sitio
+          cp index.html _sitio/
+          cp cardiac-lab.html _sitio/
+          touch _sitio/.nojekyll
+          echo "Archivos que se publican:"
+          ls -la _sitio
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _sitio
+
+      - id: despliegue
+        uses: actions/deploy-pages@v4
