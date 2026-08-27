@@ -222,18 +222,9 @@
   .ruta-paso.hecho .ruta-hecho{ color:#2dd4bf; }
   @media (max-width:520px){ .ruta-paso{ grid-template-columns:1.8rem 1fr; gap:.7rem; } .ruta-n{ width:1.8rem; height:1.8rem; font-size:.78rem; } }
 
-  .sf-wrap{ display:flex; flex-direction:column; gap:0.7rem; }
-  .sf-picker{ display:flex; flex-wrap:wrap; gap:0.5rem; }
-  .sf-btn{ background:#1e293b; border:1px solid #334155; color:#cbd5e1; font-size:0.76rem; font-weight:600; padding:0.45rem 0.8rem; border-radius:0.5rem; }
-  .sf-btn.active{ background:#0f766e; border-color:#14b8a6; color:#fff; }
-  .sf-frame{ position:relative; width:100%; height:min(62vh,520px); border-radius:0.75rem; overflow:hidden; background:#0b1220; border:1px solid var(--border); }
-  .sf-frame iframe{ width:100%; height:100%; border:0; display:block; }
-  .sf-fallback{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; gap:0.6rem; padding:1.5rem; background:#0b1220; text-align:center; }
-  .sf-fallback[hidden]{ display:none; }
-  .sf-fallback p{ font-size:0.82rem; color:#94a3b8; line-height:1.6; max-width:56ch; margin:0 auto; }
-  .sf-fallback-title{ font-size:0.95rem !important; font-weight:700; color:#f1f5f9 !important; }
-  .sf-fallback a{ color:#2dd4bf; text-decoration:underline; }
-  .sf-credit{ font-size:0.7rem; color:#64748b; }
+  .heart3d-nota{ font-size:.72rem; color:#64748b; line-height:1.55; margin-top:.7rem; }
+  .heart3d-nota a{ color:#2dd4bf; text-decoration:underline; }
+  .heart3d-nota a:focus-visible{ outline:2px solid #2dd4bf; outline-offset:2px; }
   .heart3d-hint{ position:absolute; left:0.75rem; bottom:0.6rem; font-size:10px; color:#94a3b8; background:rgba(15,23,42,0.55); padding:0.3rem 0.6rem; border-radius:0.4rem; pointer-events:none; }
 </style>
 </head>
@@ -519,11 +510,10 @@
   <div class="flex flex-wrap gap-2 mb-2">
     <button data-view="2d" class="view-btn tap-btn active">📐 Esquema 2D</button>
     <button data-view="3d" class="view-btn tap-btn">🧊 Modelo 3D</button>
-    <button data-view="sf" class="view-btn tap-btn">🫀 Sketchfab</button>
   </div>
 
   <!-- Filtros / modos -->
-  <div id="modeRow" class="flex flex-wrap gap-2 mb-4">
+  <div class="flex flex-wrap gap-2 mb-4">
     <button data-mode="normal" class="mode-btn tap-btn">Vista General</button>
     <button data-mode="mayor" class="mode-btn tap-btn">🔴 Circulación Mayor</button>
     <button data-mode="menor" class="mode-btn tap-btn">🔵 Circulación Menor</button>
@@ -538,22 +528,8 @@
         <canvas id="heart3dCanvas"></canvas>
         <p class="heart3d-hint">Arrastra para rotar · rueda/pellizco para zoom · toca una estructura</p>
       </div>
+      <p id="heart3dNota" class="heart3d-nota hidden">Este modelo es esquemático: prioriza distinguir cada estructura sobre el realismo del tejido. Para un escaneo fotorrealista, <a href="https://sketchfab.com/3d-models/anatomically-correct-human-heart-54fa880728d14c11afff78be8721620a" target="_blank" rel="noopener noreferrer">abre el corazón anatómico en Sketchfab ↗</a>.</p>
 
-      <div id="sfWrap" class="sf-wrap hidden">
-        <div class="sf-picker">
-          <button type="button" data-sf="54fa880728d14c11afff78be8721620a" class="sf-btn active">Corazón anatómico</button>
-          <button type="button" data-sf="0acf946a98ca40908f40cc3c402f1bc7" class="sf-btn">Corazón seccionado</button>
-        </div>
-        <div class="sf-frame">
-          <iframe id="sfIframe" title="Modelo cardíaco en Sketchfab" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>
-          <div id="sfFallback" class="sf-fallback" hidden>
-            <p class="sf-fallback-title">El visor de Sketchfab no se pudo cargar aquí</p>
-            <p>Esta página se publica en un entorno que puede bloquear contenido de otros dominios. El modelo sigue disponible en su ficha original, y el <strong>Modelo 3D</strong> de esta misma guía funciona sin conexión externa.</p>
-            <p><a id="sfLink" href="#" target="_blank" rel="noopener noreferrer">Abrir el modelo en sketchfab.com ↗</a></p>
-          </div>
-        </div>
-        <p class="sf-credit">Modelos alojados en Sketchfab; los derechos son de sus autores. Consulta la licencia en la ficha de cada modelo.</p>
-      </div>
       <svg id="heartSvg" viewBox="0 0 520 480" class="w-full h-auto select-none">
         <!-- Grandes vasos -->
         <rect class="struct flow-path" data-id="svc" id="pathSvc" x="85" y="2" width="26" height="62" rx="6" fill="rgba(6,182,212,0.28)" stroke="#06b6d4" stroke-width="2"/>
@@ -1627,60 +1603,20 @@
   }
 
   let activeView = '2d';
-  // ===== VISOR SKETCHFAB (iframe de embed, sin script externo) =====
-  // Si el entorno bloquea contenido de otros dominios, el iframe nunca dispara
-  // load: en ese caso mostramos el respaldo en vez de dejar un recuadro vacío.
-  const sfIframe = document.getElementById('sfIframe');
-  const sfFallback = document.getElementById('sfFallback');
-  const sfLink = document.getElementById('sfLink');
-  let sfLoaded = false, sfTimer = null, sfCurrentUid = null, sfBlocked = false;
-
-  // Un iframe bloqueado igual dispara "load" con su página de error, así que
-  // ese evento no sirve para detectarlo. La señal fiable es la violación de CSP.
-  document.addEventListener('securitypolicyviolation', e => {
-    if ((e.blockedURI || '').indexOf('sketchfab') !== -1) {
-      sfBlocked = true;
-      sfFallback.hidden = false;
-    }
-  });
-
-  sfIframe.addEventListener('load', () => {
-    if (!sfIframe.src || sfBlocked) return;
-    sfLoaded = true;
-    clearTimeout(sfTimer);
-  });
-
-  function loadSketchfab(uid) {
-    if (sfCurrentUid === uid) return;
-    sfCurrentUid = uid;
-    sfLoaded = false;
-    sfFallback.hidden = sfBlocked ? false : true;
-    sfLink.href = `https://sketchfab.com/models/${uid}`;
-    document.querySelectorAll('.sf-btn').forEach(b => b.classList.toggle('active', b.dataset.sf === uid));
-    sfIframe.src = `https://sketchfab.com/models/${uid}/embed?autostart=1&ui_theme=dark`;
-    clearTimeout(sfTimer);
-    sfTimer = setTimeout(() => { if (!sfLoaded) sfFallback.hidden = false; }, 8000);
-  }
-  document.querySelectorAll('.sf-btn').forEach(b => b.addEventListener('click', () => loadSketchfab(b.dataset.sf)));
-
   function setView(view) {
     activeView = view;
     document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
     const wrap3d = document.getElementById('heart3dWrap');
-    const wrapSf = document.getElementById('sfWrap');
+    const nota3d = document.getElementById('heart3dNota');
     heartSvg.classList.add('hidden');
     wrap3d.classList.add('hidden');
-    wrapSf.classList.add('hidden');
-    // Los filtros de circulacion/conduccion solo aplican a los visores propios
-    document.getElementById('modeRow').style.display = view === 'sf' ? 'none' : '';
+    nota3d.classList.add('hidden');
 
     if (view === '3d') {
       wrap3d.classList.remove('hidden');
+      nota3d.classList.remove('hidden');
       if (!heart3DReady) init3D();
       else { onResize3D(); heart3DApplyAll(); }
-    } else if (view === 'sf') {
-      wrapSf.classList.remove('hidden');
-      loadSketchfab(sfCurrentUid || '54fa880728d14c11afff78be8721620a');
     } else {
       heartSvg.classList.remove('hidden');
     }
